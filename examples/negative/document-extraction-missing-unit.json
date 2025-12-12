@@ -1,0 +1,9 @@
+{
+  "extraction_type": "mixed",
+  "blocks": [
+    {
+      "block_type": "text",
+      "text": "Sample text"
+    }
+  ]
+}
