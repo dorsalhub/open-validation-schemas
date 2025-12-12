@@ -1,7 +1,7 @@
 # Open Validation Schemas
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Schemas: 10](https://img.shields.io/badge/Schemas-9-brightgreen.svg)](./schemas)
+[![Schemas: 10](https://img.shields.io/badge/Schemas-10-brightgreen.svg)](./schemas)
 [![Status](https://github.com/dorsalhub/open-validation-schemas/actions/workflows/ci.yml/badge.svg)](https://github.com/dorsalhub/open-validation-schemas/actions)
 
 **Open Validation Schemas** is a collection of strict, versioned JSON schemas for defining and validating structured metadata.
