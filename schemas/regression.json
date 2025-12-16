@@ -67,6 +67,7 @@
                     "timestamp": {
                         "type": "string",
                         "format": "date-time",
+                        "maxLength": 128,
                         "description": "The specific time this prediction applies to."
                     },
                     "interval_lower": {

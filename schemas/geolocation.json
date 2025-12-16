@@ -105,7 +105,8 @@
                     "properties": {
                         "timestamp": {
                             "type": "string",
-                            "format": "date-time"
+                            "format": "date-time",
+                            "maxLength": 128
                         },
                         "camera_make": {
                             "type": "string",

@@ -64,6 +64,7 @@
                     "timestamp": {
                         "type": "string",
                         "format": "date-time",
+                        "maxLength": 128,
                         "description": "The specific time this label applies to. Used for discrete time-series or state logging."
                     },
                     "attributes": {
