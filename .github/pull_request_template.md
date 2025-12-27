@@ -18,6 +18,7 @@ Please delete options that are not relevant.
 Please describe the tests that you ran to verify your changes.
 - [ ] I have validated my schema changes against existing examples.
 - [ ] I have added a new example record for my new schema.
+- [ ] I have incorporated one or more new tests.
 
 **Test Configuration**:
 * Operating System:
