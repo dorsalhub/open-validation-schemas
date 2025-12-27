@@ -6,7 +6,7 @@
 
 **Open Validation Schemas** is a collection of strict, versioned JSON schemas for defining and validating structured metadata.
 
-It provides a **unified contract** for many common data engineering tasks, standardizing outputs from diverse sources—including **machine learning models**, **workflow steps**, **human-in-the-loop annotation**, and **ad-hoc scripts**.
+It provides a **unified contract** for many common data engineering tasks, standardizing outputs from a range of sources, including **machine learning models**, **workflow steps**, **annotation tasks**, and **ad-hoc scripts**.
 
 These schemas are designed as a standalone open standard to decouple data producers from downstream consumers. They are used in production by [DorsalHub](https://dorsalhub.com) to structure and validate user-contributed file annotations.
 
