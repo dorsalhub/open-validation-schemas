@@ -88,7 +88,24 @@ Example:
 }
 ```
 
+### 3. Language Constraints
 
-### 3. Exceptions
+We strictly support the [JSON Schema 2020](https://json-schema.org/draft/2020-12/json-schema-core) specification, and thus all schemas must include `"$schema": "https://json-schema.org/draft/2020-12/schema"` in their root. 
+
+While we support the 2020 spec, we specifically disallow specific features of the JSON Schema spec, to ensure schemas are portable, deterministic, and safe:
+
+#### No `default`
+* **Rule:** The `default` keyword is forbidden.
+* **Reason:** While `default` is officially defined as an [annotation](https://json-schema.org/draft/2020-12/draft-bhutton-json-schema-validation-00#rfc.section.9.2), allowing it creates ambiguity between different validators. Some tools treat it as an annotation, while others treat it as a [transformation directive](https://ajv.js.org/guide/modifying-data.html#assigning-defaults) (e.g. injecting the value if missing). To avoid ambiguity, we forbid the keyword.
+
+#### No External Dependencies (`$ref`)
+* **Rule:** References must be internal (e.g., `#/$defs/name`). References to remote URLs (e.g., `https://example.com/schema.json`) are forbidden.
+* **Reason:** Schemas must be fully self-contained/standalone. Validation must not depend on network availability or external server state.
+
+#### No Dynamic Scope
+* **Rule:** `$dynamicRef` and `$dynamicAnchor` are forbidden.
+* **Reason:** Scope resolution must be static and lexically determinable. This ensures schemas can be easily indexed, audited, and translated into other formats (like SQL tables or Avro) without complex runtime evaluation.
+
+### 4. Exceptions
 
 - :`open/geolocation`**: This schema implements a subset of GeoJSON ([RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946){:target="_blank"}). For this reason it does not include the `attributes` field, as GeoJSON already defines `properties` with a similar function.
