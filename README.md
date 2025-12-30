@@ -103,15 +103,21 @@ This will validate every file in the `examples/` directory against its correspon
 
 ## How to Use These Schemas
 
-These schemas can be used with any JSON Schema validation tool. For example, using the Python `jsonschema` library:
+These schemas can be used with any JSON Schema validation tool. The Python example below uses the [`jsonschema-rs`](https://github.com/Stranger6667/jsonschema/tree/master/crates/jsonschema-py) library:
 
 ```python
 import json
-from jsonschema import validate
+import jsonschema_rs
 
-# Load the schema (e.g. from a local clone or via HTTP)
+# Load the schema
 with open('schemas/classification.json') as f:
     schema = json.load(f)
+
+# Initialize validator (enforcing formats like 'date-time' and 'uri')
+validator = jsonschema_rs.Draft202012Validator(
+    schema, 
+    validate_formats=True
+)
 
 # Your data record
 record = {
@@ -122,7 +128,7 @@ record = {
 }
 
 # This will raise a ValidationError if the record is invalid
-validate(instance=record, schema=schema)
+validator.validate(record)
 
 print("Record is valid!")
 ```

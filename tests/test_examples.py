@@ -1,6 +1,6 @@
 import json
 import pytest
-from jsonschema import validate, ValidationError
+import jsonschema_rs
 from pathlib import Path
 
 # --- Configuration ---
@@ -57,8 +57,12 @@ def test_positive_examples_are_valid(example_path):
     schema_path = resolve_schema(example_path)
     schema = load_json(schema_path)
 
-    # Should NOT raise ValidationError
-    validate(instance=instance, schema=schema)
+    validator = jsonschema_rs.Draft202012Validator(
+        schema, 
+        validate_formats=True
+    )
+
+    validator.validate(instance)
 
 @pytest.mark.parametrize("example_path", get_negative_examples())
 def test_negative_examples_are_invalid(example_path):
@@ -70,5 +74,11 @@ def test_negative_examples_are_invalid(example_path):
     schema_path = resolve_schema(example_path)
     schema = load_json(schema_path)
 
-    with pytest.raises(ValidationError, match=r".*"):
-        validate(instance=instance, schema=schema)
+    validator = jsonschema_rs.Draft202012Validator(
+        schema, 
+        validate_formats=True
+    )
+
+    # Expect a validation error
+    with pytest.raises(jsonschema_rs.ValidationError):
+        validator.validate(instance)

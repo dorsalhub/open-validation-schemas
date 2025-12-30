@@ -88,11 +88,15 @@ Example:
 }
 ```
 
+#### Common Field Locations
+
+For readability and debugging purposes, common fields are in similar locations in each schema; for example `"x-license"` is always at the very top; standard fields like as `"$schema"`, `"$id"` and `"title"` sit above `"properties"`; and `"additionalproperties"` is always placed at the bottom of any object it constrains.
+
 ### 3. Language Constraints
 
-We strictly support the [JSON Schema 2020](https://json-schema.org/draft/2020-12/json-schema-core) specification, and thus all schemas must include `"$schema": "https://json-schema.org/draft/2020-12/schema"` in their root. 
+All schemas align with the [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/json-schema-core) specification, and thus all schemas must include `"$schema": "https://json-schema.org/draft/2020-12/schema"` in their root. 
 
-While we support the 2020 spec, we specifically disallow specific features of the JSON Schema spec, to ensure schemas are portable, deterministic, and safe:
+While we support the 2020-12 spec, we specifically disallow specific features of the JSON Schema spec, to ensure schemas are portable, deterministic, and safe:
 
 #### No `default`
 * **Rule:** The `default` keyword is forbidden.

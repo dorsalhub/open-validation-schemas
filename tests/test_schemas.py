@@ -1,6 +1,6 @@
 import json
 import pytest
-from jsonschema.validators import validator_for
+import jsonschema_rs
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -20,8 +20,7 @@ def get_schemas():
 @pytest.mark.parametrize("filename, schema", get_schemas())
 def test_schema_is_valid_json_schema(filename, schema):
     try:
-        cls = validator_for(schema)
-        cls.check_schema(schema)
+        jsonschema_rs.meta.validate(schema)
     except Exception as e:
         pytest.fail(f"Schema '{filename}' is invalid JSON Schema: {e}")
 
