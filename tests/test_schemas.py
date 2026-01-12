@@ -64,10 +64,6 @@ def test_schema_adheres_to_style_guide(filename, schema):
         if not isinstance(node, dict):
             continue
 
-        # Skip Logic Blocks for structural checks (strictness here breaks composition)
-        if any(k in path for k in ["/if", "/then", "/else", "/not", "/oneOf", "/anyOf", "/allOf"]):
-            continue
-
         # 1. Ban 'default' (Behavioral Ambiguity)
         if "default" in node:
             errors.append(f"{path}: The keyword 'default' is forbidden.")
@@ -90,7 +86,7 @@ def test_schema_adheres_to_style_guide(filename, schema):
 
         # 5. strict additionalProperties
         # Skip this check for geolocation.json (it is explicitly open)
-        if not is_geolocation and "properties" in node and "attributes" not in path:
+        if not is_geolocation and "properties" in node and node.get("type") == "object" and "attributes" not in path:
              if node.get("additionalProperties") is not False:
                   errors.append(f"{path}: Object must set 'additionalProperties': false.")
 
