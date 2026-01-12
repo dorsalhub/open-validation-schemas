@@ -1,7 +1,7 @@
 {
     "x-license": {
         "id": "Apache-2.0",
-        "notice": "Copyright 2025 Dorsal Hub LTD",
+        "notice": "Copyright 2025-2026 Dorsal Hub LTD",
         "url": "https://github.com/dorsalhub/open-validation-schemas/blob/main/LICENSE"
     },
     "$schema": "https://json-schema.org/draft/2020-12/schema",
