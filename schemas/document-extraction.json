@@ -211,10 +211,12 @@
                             "properties": {
                                 "x": {
                                     "type": "number",
+                                    "description": "The x-coordinate of a vertex point.",
                                     "minimum": 0
                                 },
                                 "y": {
                                     "type": "number",
+                                    "description": "The y-coordinate of a vertex point.",
                                     "minimum": 0
                                 }
                             },
