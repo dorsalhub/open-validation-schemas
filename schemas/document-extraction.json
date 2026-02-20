@@ -174,18 +174,22 @@
                         "properties": {
                             "x": {
                                 "type": "number",
+                                "description": "The x-coordinate of the top-left corner.",
                                 "minimum": 0
                             },
                             "y": {
                                 "type": "number",
+                                "description": "The y-coordinate of the top-left corner.",
                                 "minimum": 0
                             },
                             "width": {
                                 "type": "number",
+                                "description": "The width of the box.",
                                 "minimum": 0
                             },
                             "height": {
                                 "type": "number",
+                                "description": "The height of the box.",
                                 "minimum": 0
                             }
                         },
