@@ -7,7 +7,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://dorsalhub.com/schemas/open/document-extraction",
     "title": "Document Extraction",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "description": "Represent the layout and content of a document, including text blocks, geometric coordinates, and page structure.",
     "type": "object",
     "properties": {
@@ -37,6 +37,88 @@
                 "per_mille"
             ]
         },
+        "page_width": {
+            "description": "The absolute width of the page(s) in pixels. Can be a single integer for uniform documents, or an array of objects mapping specific widths to page numbers.",
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "minimum": 1,
+                    "title": "Uniform Width"
+                },
+                {
+                    "type": "array",
+                    "title": "Variable Widths",
+                    "minItems": 1,
+                    "maxItems": 10000,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "The absolute width in pixels."
+                            },
+                            "pages": {
+                                "type": "array",
+                                "description": "The page numbers (1-indexed) that share this width.",
+                                "minItems": 1,
+                                "maxItems": 100000,
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                }
+                            }
+                        },
+                        "required": [
+                            "value",
+                            "pages"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            ]
+        },
+        "page_height": {
+            "description": "The absolute height of the page(s) in pixels. Can be a single integer for uniform documents, or an array of objects mapping specific heights to page numbers.",
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "minimum": 1,
+                    "title": "Uniform Height"
+                },
+                {
+                    "type": "array",
+                    "title": "Variable Heights",
+                    "minItems": 1,
+                    "maxItems": 10000,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "The absolute height in pixels."
+                            },
+                            "pages": {
+                                "type": "array",
+                                "description": "The page numbers (1-indexed) that share this height.",
+                                "minItems": 1,
+                                "maxItems": 100000,
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                }
+                            }
+                        },
+                        "required": [
+                            "value",
+                            "pages"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            ]
+        },
         "score_explanation": {
             "type": "string",
             "description": "Defines the meaning of the 'score' field.",
@@ -51,12 +133,13 @@
                 "properties": {
                     "block_type": {
                         "type": "string",
-                        "description": "Defines the nature of this specific block (text, line, box, or polygon).",
+                        "description": "Defines the nature of this specific block (text, line, box, polygon, or multi_polygon).",
                         "enum": [
                             "text",
                             "line",
                             "box",
-                            "polygon"
+                            "polygon",
+                            "multi_polygon"
                         ]
                     },
                     "id": {
@@ -66,7 +149,7 @@
                     },
                     "text": {
                         "type": "string",
-                        "description": "The text content of the block.",
+                        "description": "The text content of the block. Required for text and line block types.",
                         "maxLength": 4096
                     },
                     "line_number": {
@@ -91,23 +174,23 @@
                         "properties": {
                             "x": {
                                 "type": "number",
-                                "minimum": 0,
-                                "description": "The x-coordinate of the top-left corner."
+                                "description": "The x-coordinate of the top-left corner.",
+                                "minimum": 0
                             },
                             "y": {
                                 "type": "number",
-                                "minimum": 0,
-                                "description": "The y-coordinate of the top-left corner."
+                                "description": "The y-coordinate of the top-left corner.",
+                                "minimum": 0
                             },
                             "width": {
                                 "type": "number",
-                                "minimum": 0,
-                                "description": "The width of the box."
+                                "description": "The width of the box.",
+                                "minimum": 0
                             },
                             "height": {
                                 "type": "number",
-                                "minimum": 0,
-                                "description": "The height of the box."
+                                "description": "The height of the box.",
+                                "minimum": 0
                             }
                         },
                         "required": [
@@ -128,13 +211,13 @@
                             "properties": {
                                 "x": {
                                     "type": "number",
-                                    "minimum": 0,
-                                    "description": "The x-coordinate of a vertex point."
+                                    "description": "The x-coordinate of a vertex point.",
+                                    "minimum": 0
                                 },
                                 "y": {
                                     "type": "number",
-                                    "minimum": 0,
-                                    "description": "The y-coordinate of a vertex point."
+                                    "description": "The y-coordinate of a vertex point.",
+                                    "minimum": 0
                                 }
                             },
                             "required": [
@@ -142,6 +225,34 @@
                                 "y"
                             ],
                             "additionalProperties": false
+                        }
+                    },
+                    "multi_polygon": {
+                        "type": "array",
+                        "description": "An array of polygons, useful for representing a single occluded or fragmented block split into multiple visible parts.",
+                        "maxItems": 100,
+                        "items": {
+                            "type": "array",
+                            "minItems": 3,
+                            "maxItems": 100,
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "x": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "y": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "required": [
+                                    "x",
+                                    "y"
+                                ],
+                                "additionalProperties": false
+                            }
                         }
                     },
                     "attributes": {
@@ -168,11 +279,27 @@
                     }
                 },
                 "required": [
-                    "text",
                     "block_type"
                 ],
                 "additionalProperties": false,
                 "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "block_type": {
+                                    "enum": [
+                                        "text",
+                                        "line"
+                                    ]
+                                }
+                            }
+                        },
+                        "then": {
+                            "required": [
+                                "text"
+                            ]
+                        }
+                    },
                     {
                         "if": {
                             "properties": {
@@ -205,6 +332,20 @@
                         "if": {
                             "properties": {
                                 "block_type": {
+                                    "const": "multi_polygon"
+                                }
+                            }
+                        },
+                        "then": {
+                            "required": [
+                                "multi_polygon"
+                            ]
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": {
+                                "block_type": {
                                     "const": "line"
                                 }
                             }
@@ -219,6 +360,11 @@
                                 {
                                     "required": [
                                         "polygon"
+                                    ]
+                                },
+                                {
+                                    "required": [
+                                        "multi_polygon"
                                     ]
                                 }
                             ]
@@ -322,6 +468,20 @@
                                             }
                                         }
                                     }
+                                },
+                                "multi_polygon": {
+                                    "items": {
+                                        "items": {
+                                            "properties": {
+                                                "x": {
+                                                    "maximum": 1
+                                                },
+                                                "y": {
+                                                    "maximum": 1
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -366,6 +526,20 @@
                                             },
                                             "y": {
                                                 "maximum": 1000
+                                            }
+                                        }
+                                    }
+                                },
+                                "multi_polygon": {
+                                    "items": {
+                                        "items": {
+                                            "properties": {
+                                                "x": {
+                                                    "maximum": 1000
+                                                },
+                                                "y": {
+                                                    "maximum": 1000
+                                                }
                                             }
                                         }
                                     }
