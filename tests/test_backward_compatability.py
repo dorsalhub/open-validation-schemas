@@ -1,3 +1,4 @@
+import copy
 import json
 from pathlib import Path
 import pytest
@@ -41,6 +42,17 @@ def get_schema_pairs():
                 new_schema
             ))
     return pairs
+
+def _get_functional_core(schema: dict) -> dict:
+    """Strip metadata that does not affect validation logic."""
+    core = copy.deepcopy(schema)
+    for key in ["version", "description", "title", "x-license", "$id"]:
+        core.pop(key, None)
+    return core
+
+def check_schemas_identical(schema_a: dict, schema_b: dict) -> bool:
+    """Checks if two schemas are functionally identical."""
+    return _get_functional_core(schema_a) == _get_functional_core(schema_b)
 
 @pytest.mark.parametrize("schema_name, v_old, v_new, old_schema, new_schema", get_schema_pairs())
 class TestBackwardCompatibility:
@@ -99,8 +111,11 @@ class TestBackwardCompatibility:
         check_node(old_schema, new_schema)
 
     def test_hypothesis_fuzzing(self, schema_name, v_old, v_new, old_schema, new_schema):
-        """Fuzzing proof: Generate thousands of valid v_old payloads and test against v_new."""
-        
+        """Generates valid payloads from the historical schema, and validates against new schema."""
+
+        if check_schemas_identical(old_schema, new_schema):
+            pytest.skip(f"{schema_name} is unchanged from {v_old}.")
+
         validator_new = jsonschema_rs.Draft202012Validator(new_schema)
 
         @given(old_data=from_schema(old_schema))
