@@ -16,22 +16,25 @@ Data pipelines are brittle when every tool defines its own output format. **Open
 
 Instead of custom parsers for every model, validate against a common definition.
 
-We enforce a "strict by default" philosophy. The schemas are designed to be:
+We enforce a "strict by default" philosophy.
 
 * **Source-Agnostic:** A **classification** result can be structured and validated in the same way, whether it comes from a BERT model, a rule-based regex script, or a human reviewer.
 * **Strict & Safe:** Schemas prevent arbitrary property nesting and enforce length limits, making them safe for databases and indexing.
+* **Backward-compatible:** All schema evolutions are strictly additive. Any JSON payload which validates today will validate against all future versions of that schema.
 * **Interoperable:** A unified shape for common tasks, ensuring downstream tools don't need custom parsers for every new model version.
 * **Community-Driven:** This repository is the central place to discuss improvements and propose new schemas for common data shapes.
 
 ## Versioning
 
-We use **Global Versioning**:
+We use **Global Lockstep Versioning** for the entire suite.
+
+Because of our commitment to **Backward Compatability**, upgrading to a newer version of the suite is for accessing new features and schemas, and will not break existing validation workflows.
 
 * **Lockstep Releases:** The version applies to **all** schemas.
 * **Semantic Versioning:** We follow [SemVer 2.0.0](https://semver.org/).
     * **Beta Status (v0.x):** While in **v0.x**, we may make breaking changes to refine the standard. We aim to stabilize quickly, but we prioritize correctness over backward compatibility until v1.0.0.
-    * **Major (v1.x -> v2.x):** Once stable (v1.0+), a breaking change to **any** schema (e.g., renaming a required field, tightening a constraint) triggers a major version bump for the entire collection.
-    * **Minor (v1.1 -> v1.2):** Non-breaking additions (e.g., adding an optional field or a new schema).
+    * **Major (v1.x -> v2.x):** In the future, we plan to upgrade once to 1.0.0. This will not indicate a breaking change, but our confidence in the suite's maturity and stability.
+    * **Minor (v1.1 -> v1.2):** Non-breaking additions (e.g., adding an optional field or a new schema). This bumps the version for the entire package.
     * **Patch (v1.1.0 -> v1.1.1):** Bug fixes, description updates, or non-functional changes.
 * **Schema Metadata:** Every schema file contains a top-level `"version"` field matching the release it belongs to.
 
@@ -40,52 +43,52 @@ We use **Global Versioning**:
 ### `open/audio-transcription`
 Store text transcribed from an audio source, supporting timed segments, speaker identification, and non-verbal events.
 * [**View Schema**](./schemas/audio-transcription.json)
-* [**View Example Record**](./examples/positive/audio-transcription-1.json)
+* [**View Example Record**](./reference/examples/positive/audio-transcription-1.json)
 
 ### `open/classification`
 Represent classification results, including predicted labels, normalized scoring, and references to the taxonomy or vocabulary.
 * [**View Schema**](./schemas/classification.json)
-* [**View Example Record**](./examples/positive/classification-1.json)
+* [**View Example Record**](./reference/examples/positive/classification-1.json)
 
 ### `open/document-extraction`
 Represent the layout and content of a document, including text blocks, geometric coordinates, and page structure.
 * [**View Schema**](./schemas/document-extraction.json)
-* [**View Example Record**](./examples/positive/document-extraction-1.json)
+* [**View Example Record**](./reference/examples/positive/document-extraction-1.json)
 
 ### `open/embedding`
 Store a vector embedding, including the high-dimensional feature vector and metadata about the algorithm used to generate it.
 * [**View Schema**](./schemas/embedding.json)
-* [**View Example Record**](./examples/positive/embedding-1.json)
+* [**View Example Record**](./reference/examples/positive/embedding-1.json)
 
 ### `open/entity-extraction`
 Represent named entities, structural slots, or visual concepts extracted from unstructured data. Links raw evidence (text spans or geometric regions) to normalized values and business concepts.
 * [**View Schema**](./schemas/entity-extraction.json)
-* [**View Example Record**](./examples/positive/entity-extraction-1.json)
+* [**View Example Record**](./reference/examples/positive/entity-extraction-1.json)
 
 ### `open/generic`
 Store arbitrary key-value data in a strictly typed structure to prevent uncontrolled nesting.
 * [**View Schema**](./schemas/generic.json)
-* [**View Example Record**](./examples/positive/generic-1.json)
+* [**View Example Record**](./reference/examples/positive/generic-1.json)
 
 ### `open/geolocation`
 Represent a geographic feature using a strict, safe subset of GeoJSON (RFC 7946) optimized for predictable parsing. Restricts the root to a single 'Feature', supports fixed-depth geometries, and disallows recursive collections.
 * [**View Schema**](./schemas/geolocation.json)
-* [**View Example Record**](./examples/positive/geolocation-1.json)
+* [**View Example Record**](./reference/examples/positive/geolocation-1.json)
 
 ### `open/llm-output`
 Store the full context of a single atomic Large Language Model (LLM) interaction, including the input prompt, generation parameters, and raw output and optional evaluation metrics.
 * [**View Schema**](./schemas/llm-output.json)
-* [**View Example Record**](./examples/positive/llm-output-1.json)
+* [**View Example Record**](./reference/examples/positive/llm-output-1.json)
 
 ### `open/object-detection`
 Represent objects detected within a file, supporting bounding boxes, polygons, hierarchical relationships (parent/child), and normalized scoring.
 * [**View Schema**](./schemas/object-detection.json)
-* [**View Example Record**](./examples/positive/object-detection-1.json)
+* [**View Example Record**](./reference/examples/positive/object-detection-1.json)
 
 ### `open/regression`
 Represent continuous numerical predictions. Supports point estimates, confidence intervals, and time-series forecasting.
 * [**View Schema**](./schemas/regression.json)
-* [**View Example Record**](./examples/positive/regression-1.json)
+* [**View Example Record**](./reference/examples/positive/regression-1.json)
 
 ## Development & Testing
 

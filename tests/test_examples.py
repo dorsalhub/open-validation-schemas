@@ -5,8 +5,9 @@ from pathlib import Path
 
 # --- Configuration ---
 REPO_ROOT = Path(__file__).parent.parent
+REFERENCE_ROOT = REPO_ROOT / "reference"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
-EXAMPLES_DIR = REPO_ROOT / "examples"
+EXAMPLES_DIR = REFERENCE_ROOT / "examples"
 POSITIVE_DIR = EXAMPLES_DIR / "positive"
 NEGATIVE_DIR = EXAMPLES_DIR / "negative"
 
