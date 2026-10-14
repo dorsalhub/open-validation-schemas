@@ -1,5 +1,5 @@
 {
-  "track_id": 1,
+  "track_id": "1",
   "language": "eng",
   "duration": -15.5,
   "text": "This record contains a negative duration, which must be rejected by the schema.",

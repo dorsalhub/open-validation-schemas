@@ -11,9 +11,11 @@ SCHEMAS_DIR = REPO_ROOT / "schemas"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 PACKAGE_VERSION = tomllib.loads(PYPROJECT.read_text())["project"]["version"]
-ID_PREFIX = "https://dorsalhub.com/schemas/open/"
+ID_FORMAT = "https://oatschema.org/{version}/{name}"
+RESERVED_NAMES = {"docs", "latest"}
 ROOT_KEY_ORDER = ["x-license", "$schema", "$id", "title", "version", "description"]
 OPEN_SCHEMAS = {"geolocation.json"}
+NON_STRING_IDENTIFIERS = {("geolocation.json", "#/properties/id")}
 SHARED_GEOMETRY_PARENTS: dict[str, tuple[str | int, ...]] = {
     "document-extraction.json": ("properties", "blocks", "items", "properties"),
     "entity-extraction.json": (
@@ -82,6 +84,33 @@ def walk(
             yield from walk(node[key], f"{path}/{key}", True)
 
 
+def unguarded_conditions(node: dict, own: bool = True) -> list[tuple[str, str]]:
+    """Return (location, property) for each 'if' that tests a property neither it nor its object requires."""
+    owner_required = set(node.get("required", []))
+    conditionals = [("", node)] if own else []
+    conditionals += [
+        (f"/allOf/{i}", sub)
+        for i, sub in enumerate(node.get("allOf", []))
+        if isinstance(sub, dict)
+    ]
+    found: list[tuple[str, str]] = []
+    for location, holder in conditionals:
+        condition = holder.get("if")
+        if not isinstance(condition, dict):
+            continue
+        required = (
+            owner_required
+            | set(holder.get("required", []))
+            | set(condition.get("required", []))
+        )
+        found.extend(
+            (f"{location}/if", name)
+            for name in condition.get("properties", {})
+            if name not in required
+        )
+    return found
+
+
 def types_of(node: dict) -> list[str]:
     t = node.get("type")
     if t is None:
@@ -107,6 +136,12 @@ def style_violations(filename: str, schema: dict) -> list[str]:
 
         if isinstance(node.get("type"), list):
             errors.append(f"{path}: Use 'anyOf' instead of a list of types.")
+
+        in_all_of = path.split("/")[-2:-1] == ["allOf"]
+        for location, name in unguarded_conditions(node, own=not in_all_of):
+            errors.append(
+                f"{path}{location}: 'if' tests '{name}' without requiring it, so it holds whenever '{name}' is absent."
+            )
 
         if overlay:
             continue
@@ -146,6 +181,13 @@ def style_violations(filename: str, schema: dict) -> list[str]:
                 )
 
         name = path.rsplit("/", 1)[-1]
+        if (
+            path.split("/")[-2:-1] == ["properties"]
+            and (name == "id" or name.endswith("_id"))
+            and (filename, path) not in NON_STRING_IDENTIFIERS
+            and (types != ["string"] or node.get("maxLength") != 128)
+        ):
+            errors.append(f"{path}: Identifiers must be strings with 'maxLength': 128.")
         if (
             path.endswith("/properties/language")
             and node.get("pattern") != "^[a-z]{3}$"
@@ -227,12 +269,22 @@ def test_schema_metadata(filename, schema):
     assert schema.get("version") == PACKAGE_VERSION, (
         f"{filename}: version must match pyproject.toml ({PACKAGE_VERSION})"
     )
-    assert schema.get("$id") == ID_PREFIX + Path(filename).stem, (
-        f"{filename}: unexpected $id {schema.get('$id')!r}"
+    expected_id = ID_FORMAT.format(version=PACKAGE_VERSION, name=Path(filename).stem)
+    assert schema.get("$id") == expected_id, (
+        f"{filename}: $id must be {expected_id!r}, not {schema.get('$id')!r}"
     )
     assert schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema", (
         f"{filename}: must declare draft 2020-12"
     )
+
+
+@pytest.mark.parametrize("filename", SCHEMAS)
+def test_schema_name_is_not_reserved(filename):
+    name = Path(filename).stem
+    assert not name[:1].isdigit(), (
+        f"{filename}: schema names must not start with a digit"
+    )
+    assert name not in RESERVED_NAMES, f"{filename}: '{name}' is a reserved name"
 
 
 @pytest.mark.parametrize("filename, schema", SCHEMAS.items())
@@ -401,6 +453,53 @@ def test_shared_geometry_is_identical(field):
                 "additionalProperties": False,
             },
         ),
+        (
+            "integer identifier",
+            {
+                "type": "object",
+                "properties": {"id": {"type": "integer"}},
+                "additionalProperties": False,
+            },
+        ),
+        (
+            "string-or-integer reference",
+            {
+                "type": "object",
+                "properties": {
+                    "parent_id": {
+                        "anyOf": [
+                            {"type": "string", "maxLength": 128},
+                            {"type": "integer"},
+                        ]
+                    }
+                },
+                "additionalProperties": False,
+            },
+        ),
+        (
+            "if without required",
+            {
+                "type": "object",
+                "properties": {"a": {"type": "number"}, "b": {"type": "number"}},
+                "if": {"properties": {"a": {"const": 1}}},
+                "then": {"required": ["b"]},
+                "additionalProperties": False,
+            },
+        ),
+        (
+            "if without required inside allOf",
+            {
+                "type": "object",
+                "properties": {"a": {"type": "number"}, "b": {"type": "number"}},
+                "allOf": [
+                    {
+                        "if": {"properties": {"a": {"const": 1}}},
+                        "then": {"required": ["b"]},
+                    }
+                ],
+                "additionalProperties": False,
+            },
+        ),
     ],
 )
 def test_style_lint_rejects(description, schema):
@@ -414,3 +513,26 @@ def test_style_lint_ignores_property_named_default():
         "additionalProperties": False,
     }
     assert style_violations("probe.json", schema) == []
+
+
+@pytest.mark.parametrize(
+    "description, guard",
+    [
+        ("required by the if", {"if_required": ["a"]}),
+        ("required by the enclosing object", {"required": ["a"]}),
+    ],
+)
+def test_style_lint_accepts_guarded_if(description, guard):
+    condition: dict = {"properties": {"a": {"const": 1}}}
+    if "if_required" in guard:
+        condition["required"] = guard["if_required"]
+    schema = {
+        "type": "object",
+        "properties": {"a": {"type": "number"}, "b": {"type": "number"}},
+        "required": guard.get("required", []),
+        "allOf": [{"if": condition, "then": {"required": ["b"]}}],
+        "additionalProperties": False,
+    }
+    assert style_violations("probe.json", schema) == [], (
+        f"Style lint rejected an if {description}"
+    )

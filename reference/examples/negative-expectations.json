@@ -170,5 +170,33 @@
   "regression-quantile-missing-level.json": {
     "path": "/points/0",
     "message": "\"quantile_level\" is a required property"
+  },
+  "temporal-segmentation-duplicate-vocabulary.json": {
+    "path": "/vocabulary",
+    "message": "has non-unique elements"
+  },
+  "temporal-segmentation-empty-without-context.json": {
+    "path": "",
+    "message": "is not valid under any of the schemas"
+  },
+  "temporal-segmentation-integer-group-id.json": {
+    "path": "/segments/0/group_id",
+    "message": "is not of type \"string\""
+  },
+  "temporal-segmentation-long-group-id.json": {
+    "path": "/segments/0/group_id",
+    "message": "is longer than 128 characters"
+  },
+  "temporal-segmentation-missing-label.json": {
+    "path": "/segments/0",
+    "message": "\"label\" is a required property"
+  },
+  "temporal-segmentation-negative-start-time.json": {
+    "path": "/segments/0/start_time",
+    "message": "is less than the minimum"
+  },
+  "temporal-segmentation-nested-attributes.json": {
+    "path": "/segments/0/attributes/shots",
+    "message": "is not valid under any of the schemas"
   }
 }
