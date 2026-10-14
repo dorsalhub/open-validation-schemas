@@ -28,8 +28,8 @@
         },
         "vocabulary": {
             "type": "array",
-            "description": "A list of the possible labels in this classification scheme.",
-            "maxItems": 10000,
+            "description": "A list of the possible labels in this classification scheme. For more than 100 labels, use 'vocabulary_url'.",
+            "maxItems": 100,
             "uniqueItems": true,
             "items": {
                 "type": "string",
@@ -53,7 +53,7 @@
                 "properties": {
                     "label": {
                         "type": "string",
-                        "description": "The predicted label.",
+                        "description": "The predicted label. Must be a member of 'vocabulary' when it is present.",
                         "maxLength": 128
                     },
                     "score": {

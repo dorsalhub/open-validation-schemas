@@ -34,8 +34,8 @@
         },
         "vocabulary": {
             "type": "array",
-            "description": "A list of the possible labels for detected objects.",
-            "maxItems": 10000,
+            "description": "A list of the possible labels for detected objects. For more than 100 labels, use 'vocabulary_url'.",
+            "maxItems": 100,
             "uniqueItems": true,
             "items": {
                 "type": "string",
@@ -68,7 +68,7 @@
                     },
                     "label": {
                         "type": "string",
-                        "description": "The label of the detected object (e.g., 'car', 'face', 'logo').",
+                        "description": "The label of the detected object (e.g., 'car', 'face', 'logo'). Must be a member of 'vocabulary' when it is present.",
                         "maxLength": 128
                     },
                     "score": {
@@ -78,13 +78,97 @@
                         "maximum": 1
                     },
                     "box": {
-                        "$ref": "#/$defs/box"
+                        "type": "object",
+                        "description": "A rectangular bounding box defined by its top-left corner (x, y) and its dimensions.",
+                        "properties": {
+                            "x": {
+                                "type": "number",
+                                "description": "The x-coordinate of the top-left corner.",
+                                "minimum": 0
+                            },
+                            "y": {
+                                "type": "number",
+                                "description": "The y-coordinate of the top-left corner.",
+                                "minimum": 0
+                            },
+                            "width": {
+                                "type": "number",
+                                "description": "The width of the box.",
+                                "minimum": 0
+                            },
+                            "height": {
+                                "type": "number",
+                                "description": "The height of the box.",
+                                "minimum": 0
+                            }
+                        },
+                        "required": [
+                            "x",
+                            "y",
+                            "width",
+                            "height"
+                        ],
+                        "additionalProperties": false
                     },
                     "polygon": {
-                        "$ref": "#/$defs/polygon"
+                        "type": "array",
+                        "description": "An ordered list of vertices defining a non-rectangular boundary.",
+                        "minItems": 3,
+                        "maxItems": 1000,
+                        "items": {
+                            "type": "object",
+                            "description": "A single vertex, measured from the top-left corner of the page or image.",
+                            "properties": {
+                                "x": {
+                                    "type": "number",
+                                    "description": "The x-coordinate of the vertex.",
+                                    "minimum": 0
+                                },
+                                "y": {
+                                    "type": "number",
+                                    "description": "The y-coordinate of the vertex.",
+                                    "minimum": 0
+                                }
+                            },
+                            "required": [
+                                "x",
+                                "y"
+                            ],
+                            "additionalProperties": false
+                        }
                     },
                     "multi_polygon": {
-                        "$ref": "#/$defs/multi_polygon"
+                        "type": "array",
+                        "description": "A list of polygons, for a single region that is occluded or fragmented into multiple visible parts.",
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "items": {
+                            "type": "array",
+                            "description": "An ordered list of vertices defining a non-rectangular boundary.",
+                            "minItems": 3,
+                            "maxItems": 1000,
+                            "items": {
+                                "type": "object",
+                                "description": "A single vertex, measured from the top-left corner of the page or image.",
+                                "properties": {
+                                    "x": {
+                                        "type": "number",
+                                        "description": "The x-coordinate of the vertex.",
+                                        "minimum": 0
+                                    },
+                                    "y": {
+                                        "type": "number",
+                                        "description": "The y-coordinate of the vertex.",
+                                        "minimum": 0
+                                    }
+                                },
+                                "required": [
+                                    "x",
+                                    "y"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
                     },
                     "attributes": {
                         "type": "object",
@@ -326,79 +410,5 @@
             }
         }
     ],
-    "$defs": {
-        "point": {
-            "type": "object",
-            "description": "A single vertex, measured from the top-left corner of the page or image.",
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "description": "The x-coordinate of the vertex.",
-                    "minimum": 0
-                },
-                "y": {
-                    "type": "number",
-                    "description": "The y-coordinate of the vertex.",
-                    "minimum": 0
-                }
-            },
-            "required": [
-                "x",
-                "y"
-            ],
-            "additionalProperties": false
-        },
-        "box": {
-            "type": "object",
-            "description": "A rectangular bounding box defined by its top-left corner (x, y) and its dimensions.",
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "description": "The x-coordinate of the top-left corner.",
-                    "minimum": 0
-                },
-                "y": {
-                    "type": "number",
-                    "description": "The y-coordinate of the top-left corner.",
-                    "minimum": 0
-                },
-                "width": {
-                    "type": "number",
-                    "description": "The width of the box.",
-                    "minimum": 0
-                },
-                "height": {
-                    "type": "number",
-                    "description": "The height of the box.",
-                    "minimum": 0
-                }
-            },
-            "required": [
-                "x",
-                "y",
-                "width",
-                "height"
-            ],
-            "additionalProperties": false
-        },
-        "polygon": {
-            "type": "array",
-            "description": "An ordered list of vertices defining a non-rectangular boundary.",
-            "minItems": 3,
-            "maxItems": 1000,
-            "items": {
-                "$ref": "#/$defs/point"
-            }
-        },
-        "multi_polygon": {
-            "type": "array",
-            "description": "A list of polygons, for a single region that is occluded or fragmented into multiple visible parts.",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": {
-                "$ref": "#/$defs/polygon"
-            }
-        }
-    },
     "additionalProperties": false
 }

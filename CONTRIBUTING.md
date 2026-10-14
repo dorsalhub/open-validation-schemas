@@ -34,7 +34,7 @@ If you have an idea for a new, generic open validation schema that would be valu
     * Add at least one valid example to `reference/examples/positive/schema-name-1.json`.
     * Add at least one invalid example to `reference/examples/negative/schema-name-<what-it-breaks>.json` to demonstrate constraint enforcement. Each negative example should break exactly one rule.
     * Record why each negative example fails in `reference/examples/negative-expectations.json`: the JSON Pointer `path` of the failing value (`""` for the root) and a substring of the expected error `message`.
-4.  **Check Backward Compatibility:** Changes to existing schemas must not reject data that the latest release in `reference/schemas/` accepted. If a breaking change is intentional (only allowed while in v0.x), add an entry to `reference/breaking-changes.json` under the upcoming version, with the `schema`, the `path` (glob patterns allowed), the `rule` reported by the test, and a `reason`.
+4.  **Check Backward Compatibility:** From v1.0.0, changes to existing schemas must not reject data that the latest release in `reference/schemas/` accepted. Releases before v1.0.0 are works in progress and carry no compatibility guarantee, so call out any breaking change in your pull request description instead.
 5.  **Run Tests Locally:**
     * Install `uv` (if not installed): `curl -LsSf https://astral.sh/uv/install.sh | sh`
     * Run the test suite: `uv run pytest`
@@ -45,7 +45,7 @@ If you have an idea for a new, generic open validation schema that would be valu
 ### Releasing (maintainers)
 
 1.  Bump `version` in `pyproject.toml` and the `"version"` field of every schema (the tests enforce that they match).
-2.  Once the release is published, copy every file in `schemas/` to `reference/schemas/<released-version>/`. That snapshot becomes the baseline for the next release's backward-compatibility tests.
+2.  From v1.0.0, once the release is published, copy every file in `schemas/` to `reference/schemas/<released-version>/`. That snapshot becomes the baseline for the next release's backward-compatibility tests. Snapshots of v0.x releases are ignored by the tests.
 
 ### Style Guide for Schemas
 

@@ -14,12 +14,22 @@ PACKAGE_VERSION = tomllib.loads(PYPROJECT.read_text())["project"]["version"]
 ID_PREFIX = "https://dorsalhub.com/schemas/open/"
 ROOT_KEY_ORDER = ["x-license", "$schema", "$id", "title", "version", "description"]
 OPEN_SCHEMAS = {"geolocation.json"}
-SHARED_GEOMETRY_SCHEMAS = [
-    "document-extraction.json",
-    "entity-extraction.json",
-    "object-detection.json",
-]
-SHARED_GEOMETRY_DEFS = ["point", "box", "polygon", "multi_polygon"]
+SHARED_GEOMETRY_PARENTS: dict[str, tuple[str | int, ...]] = {
+    "document-extraction.json": ("properties", "blocks", "items", "properties"),
+    "entity-extraction.json": (
+        "properties",
+        "entities",
+        "items",
+        "properties",
+        "location",
+        "items",
+        "oneOf",
+        1,
+        "properties",
+    ),
+    "object-detection.json": ("properties", "objects", "items", "properties"),
+}
+SHARED_GEOMETRY_FIELDS = ["box", "polygon", "multi_polygon"]
 FORBIDDEN_KEYWORDS = {
     "default",
     "$dynamicRef",
@@ -238,20 +248,20 @@ def test_schema_key_order(filename, schema):
         pytest.fail(f"Schema '{filename}' has misplaced keys:\n" + "\n".join(errors))
 
 
-@pytest.mark.parametrize("definition", SHARED_GEOMETRY_DEFS)
-def test_shared_geometry_definitions_are_identical(definition):
-    variants = {
-        name: SCHEMAS[name].get("$defs", {}).get(definition)
-        for name in SHARED_GEOMETRY_SCHEMAS
-    }
-    reference = variants[SHARED_GEOMETRY_SCHEMAS[0]]
-    assert reference is not None, (
-        f"{SHARED_GEOMETRY_SCHEMAS[0]} is missing '#/$defs/{definition}'"
-    )
-    drifted = [name for name, value in variants.items() if value != reference]
-    assert not drifted, (
-        f"'#/$defs/{definition}' differs from {SHARED_GEOMETRY_SCHEMAS[0]} in: {drifted}"
-    )
+def geometry_field(filename: str, field: str):
+    node = SCHEMAS[filename]
+    for key in SHARED_GEOMETRY_PARENTS[filename]:
+        node = node[key]
+    return node.get(field)
+
+
+@pytest.mark.parametrize("field", SHARED_GEOMETRY_FIELDS)
+def test_shared_geometry_is_identical(field):
+    variants = {name: geometry_field(name, field) for name in SHARED_GEOMETRY_PARENTS}
+    first = next(iter(SHARED_GEOMETRY_PARENTS))
+    assert variants[first] is not None, f"{first} has no '{field}' geometry"
+    drifted = [name for name, value in variants.items() if value != variants[first]]
+    assert not drifted, f"'{field}' geometry differs from {first} in: {drifted}"
 
 
 @pytest.mark.parametrize(

@@ -9,6 +9,21 @@ Where possible, the Open Validation Schemas adhere to these design patterns.
   * **No Unbounded Nesting:** Schemas must have a fixed depth. Self-references (`"$ref": "#"`) and recursive `$defs` are forbidden.
   * **No Type Lists:** Write `"anyOf": [{ "type": "string", "maxLength": 128 }, { "type": "integer" }]` rather than `"type": ["string", "integer"]`, so that each type carries its own constraints.
 
+#### String Length Tiers
+
+Choose a string's `maxLength` from this table rather than inventing a new limit. When a field outgrows its limit, move it to the next tier.
+
+| `maxLength` | Use for | Examples |
+| :--- | :--- | :--- |
+| `3` | ISO codes | `language` |
+| `128` | Identifiers, labels, names and keys | `label`, `id`, `speaker.name`, `propertyNames` |
+| `256` | Short explanations | `score_explanation`, `target` |
+| `1024` | Free-text names and short values | `producer`, `model`, `attributes` values |
+| `2048` | URLs | `vocabulary_url` |
+| `4096` | A single unit of extracted text | a block, segment or entity `text` |
+| `262144` | Long input text | `prompt`, `system_prompt` |
+| `524288` | Long output text | `response_data`, a full transcription `text` |
+
 ### 2. Common Patterns
 
 #### Producer vs Model
@@ -92,9 +107,13 @@ Example:
 }
 ```
 
+#### Vocabularies
+
+Schemas with labels (`open/classification`, `open/entity-extraction`, `open/object-detection`) accept an inline `vocabulary` of up to 100 unique labels, or a `vocabulary_url` for anything larger. A vocabulary is repeated in every record, so a large inline one multiplies across a dataset. At 100 labels of up to 128 characters, it stays under 13 KB per record.
+
 #### Geometry
 
-Schemas that carry 2D geometry (`open/document-extraction`, `open/entity-extraction`, `open/object-detection`) share identical `point`, `box`, `polygon` and `multi_polygon` definitions under `$defs`. Because remote references are forbidden, each schema holds its own copy; change all copies together (the tests check they are identical).
+Schemas that carry 2D geometry (`open/document-extraction`, `open/entity-extraction`, `open/object-detection`) share identical inline `box`, `polygon` and `multi_polygon` definitions. Because remote references are forbidden, each schema holds its own copy; change all copies together (the tests check they are identical).
 
 Coordinates are measured from the top-left corner and are never negative. Every coordinate is expressed in the record's `unit` (`px`, `pt`, `normalized` or `per_mille`), and `unit` is required whenever geometry is present.
 
@@ -106,6 +125,17 @@ An `if` that tests a property must also list that property in `required`. Otherw
 "if": {
     "properties": { "unit": { "const": "normalized" } },
     "required": ["unit"]
+}
+```
+
+#### Constraints JSON Schema Cannot Express
+
+Some rules relate two values, such as an end time that must not be earlier than its start time, or a label that must belong to the record's `vocabulary`. JSON Schema cannot check these, so state them in the field's `description` with "must", and leave consumers to enforce them:
+
+```json
+"end_time": {
+    "type": "number",
+    "description": "Segment end time in seconds. Must not be earlier than start_time."
 }
 ```
 
@@ -126,6 +156,7 @@ While we support the 2020-12 spec, we specifically disallow specific features of
 #### No External Dependencies (`$ref`)
 * **Rule:** References must be internal (e.g., `#/$defs/name`). References to remote URLs (e.g., `https://example.com/schema.json`) are forbidden.
 * **Reason:** Schemas must be fully self-contained/standalone. Validation must not depend on network availability or external server state.
+* **Use sparingly:** Only move a subschema into `$defs` when it is reused within the same schema (as `open/geolocation` reuses `position`). Write single-use subschemas inline, where they are read.
 
 #### No Dynamic Scope
 * **Rule:** `$dynamicRef` and `$dynamicAnchor` are forbidden.

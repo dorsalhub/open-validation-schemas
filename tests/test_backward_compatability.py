@@ -1,7 +1,6 @@
 import copy
 import json
 import tomllib
-from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import NamedTuple
 
@@ -15,7 +14,6 @@ from packaging.version import Version
 ROOT_DIR = Path(__file__).parent.parent
 REFERENCE_DIR = ROOT_DIR / "reference" / "schemas"
 WORKING_DIR = ROOT_DIR / "schemas"
-WAIVERS_FILE = ROOT_DIR / "reference" / "breaking-changes.json"
 PACKAGE_VERSION = tomllib.loads((ROOT_DIR / "pyproject.toml").read_text())["project"][
     "version"
 ]
@@ -38,6 +36,7 @@ OPAQUE_KEYWORDS = (
     "contentMediaType",
 )
 FUZZ_EXAMPLES = 50
+STABLE_FROM = Version("1.0.0")
 
 
 class Violation(NamedTuple):
@@ -47,18 +46,17 @@ class Violation(NamedTuple):
 
 
 def latest_reference_dir() -> Path | None:
+    """Return the latest stable release; releases before 1.0.0 carry no compatibility promise."""
     versions = (
-        [d for d in REFERENCE_DIR.iterdir() if d.is_dir()]
+        [
+            d
+            for d in REFERENCE_DIR.iterdir()
+            if d.is_dir() and Version(d.name) >= STABLE_FROM
+        ]
         if REFERENCE_DIR.exists()
         else []
     )
     return max(versions, key=lambda d: Version(d.name)) if versions else None
-
-
-def load_waivers() -> list[dict]:
-    if not WAIVERS_FILE.exists():
-        return []
-    return json.loads(WAIVERS_FILE.read_text()).get(PACKAGE_VERSION, [])
 
 
 def dereference(schema: dict) -> dict:
@@ -426,18 +424,6 @@ def functional_core(schema: dict) -> dict:
     return core
 
 
-def is_waived(schema_name: str, violation: Violation, waivers: list[dict]) -> bool:
-    return any(matches(schema_name, violation, w) for w in waivers)
-
-
-def matches(schema_name: str, violation: Violation, waiver: dict) -> bool:
-    return (
-        fnmatchcase(schema_name, waiver["schema"])
-        and fnmatchcase(violation.path, waiver["path"])
-        and fnmatchcase(violation.rule, waiver.get("rule", "*"))
-    )
-
-
 def get_schema_pairs():
     latest = latest_reference_dir()
     if not latest:
@@ -459,16 +445,6 @@ def get_schema_pairs():
 
 
 SCHEMA_PAIRS = get_schema_pairs()
-WAIVERS = load_waivers()
-
-
-def all_violations() -> dict[str, list[Violation]]:
-    return {
-        p.values[0]: compatibility_violations(
-            dereference(p.values[2]), dereference(p.values[3])
-        )
-        for p in SCHEMA_PAIRS
-    }
 
 
 def test_no_schema_was_removed():
@@ -481,50 +457,23 @@ def test_no_schema_was_removed():
     assert not removed, f"Schemas removed since {latest.name}: {sorted(removed)}"
 
 
-def test_waivers_are_well_formed_and_used():
-    violations = all_violations()
-    unused = []
-    for waiver in WAIVERS:
-        assert {"schema", "path", "reason"} <= waiver.keys(), (
-            f"Waiver is missing schema/path/reason: {waiver}"
-        )
-        if not any(
-            matches(name, v, waiver) for name, vs in violations.items() for v in vs
-        ):
-            unused.append(waiver)
-    assert not unused, (
-        "Waivers that match no breaking change (remove them):\n"
-        + "\n".join(json.dumps(w) for w in unused)
-    )
-
-
 @pytest.mark.parametrize("schema_name, v_old, old_schema, new_schema", SCHEMA_PAIRS)
 class TestBackwardCompatibility:
-    def test_no_unwaived_breaking_changes(
-        self, schema_name, v_old, old_schema, new_schema
-    ):
-        """Every change that can reject previously valid data must be listed in reference/breaking-changes.json."""
+    def test_no_breaking_changes(self, schema_name, v_old, old_schema, new_schema):
+        """No change may reject data that the latest stable release accepted."""
         violations = compatibility_violations(
             dereference(old_schema), dereference(new_schema)
         )
-        unwaived = [v for v in violations if not is_waived(schema_name, v, WAIVERS)]
-        if unwaived:
+        if violations:
             pytest.fail(
-                f"[{schema_name}] {len(unwaived)} breaking change(s) since {v_old} are not waived for {PACKAGE_VERSION}:\n"
-                + "\n".join(f"  {v.path} [{v.rule}] {v.message}" for v in unwaived)
+                f"[{schema_name}] {len(violations)} breaking change(s) since {v_old}:\n"
+                + "\n".join(f"  {v.path} [{v.rule}] {v.message}" for v in violations)
             )
 
     def test_hypothesis_fuzzing(self, schema_name, v_old, old_schema, new_schema):
         """Generates valid payloads from the historical schema, and validates against the new schema."""
         if functional_core(old_schema) == functional_core(new_schema):
             pytest.skip(f"{schema_name} is unchanged from {v_old}.")
-        violations = compatibility_violations(
-            dereference(old_schema), dereference(new_schema)
-        )
-        if any(is_waived(schema_name, v, WAIVERS) for v in violations):
-            pytest.skip(
-                f"{schema_name} has waived breaking changes for {PACKAGE_VERSION}."
-            )
 
         validator_old = jsonschema_rs.Draft202012Validator(
             old_schema, validate_formats=True

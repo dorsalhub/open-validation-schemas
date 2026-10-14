@@ -20,7 +20,7 @@ We enforce a "strict by default" philosophy.
 
 * **Source-Agnostic:** A **classification** result can be structured and validated in the same way, whether it comes from a BERT model, a rule-based regex script, or a human reviewer.
 * **Strict & Safe:** Schemas prevent arbitrary property nesting and enforce length limits, making them safe for databases and indexing.
-* **Backward-compatible:** From v1.0.0, all schema evolutions are strictly additive: any JSON payload which validates against a release will validate against all future releases of that schema. While in v0.x, deliberate breaking changes are possible, and every one is listed in [`reference/breaking-changes.json`](./reference/breaking-changes.json).
+* **Backward-compatible:** From v1.0.0, all schema evolutions are strictly additive: any JSON payload which validates against a release will validate against all future releases of that schema. Releases before v1.0.0 are works in progress and may contain breaking changes.
 * **Interoperable:** A unified shape for common tasks, ensuring downstream tools don't need custom parsers for every new model version.
 * **Community-Driven:** This repository is the central place to discuss improvements and propose new schemas for common data shapes.
 
@@ -32,7 +32,7 @@ Because of our commitment to **Backward Compatibility**, from v1.0.0 upgrading t
 
 * **Lockstep Releases:** The version applies to **all** schemas.
 * **Semantic Versioning:** We follow [SemVer 2.0.0](https://semver.org/).
-    * **Beta Status (v0.x):** While in **v0.x**, we may make breaking changes to refine the standard. We aim to stabilize quickly, but we prioritize correctness over backward compatibility until v1.0.0. Each breaking change is recorded, with its reason, in [`reference/breaking-changes.json`](./reference/breaking-changes.json) under the version that introduced it.
+    * **Beta Status (v0.x):** While in **v0.x**, we may make breaking changes to refine the standard. We aim to stabilize quickly, but we prioritize correctness over backward compatibility until v1.0.0.
     * **Major (v1.x -> v2.x):** In the future, we plan to upgrade once to 1.0.0. This will not indicate a breaking change, but our confidence in the suite's maturity and stability.
     * **Minor (v1.1 -> v1.2):** Non-breaking additions (e.g., adding an optional field or a new schema). This bumps the version for the entire package.
     * **Patch (v1.1.0 -> v1.1.1):** Bug fixes, description updates, or non-functional changes.
@@ -106,7 +106,7 @@ This runs three groups of tests:
 
 * **Examples** (`tests/test_examples.py`): every file in `reference/examples/positive/` must validate, and every file in `reference/examples/negative/` must fail at the location and with the message recorded in `reference/examples/negative-expectations.json`.
 * **Schemas** (`tests/test_schemas.py`): every schema must be valid JSON Schema 2020-12, follow the [Style Guide](./STYLEGUIDE.md), and carry the suite version from `pyproject.toml`.
-* **Backward compatibility** (`tests/test_backward_compatability.py`): every schema is compared against the latest release in `reference/schemas/<version>/`. Any change that could reject previously valid data fails unless it is listed in `reference/breaking-changes.json` for the current version. Schemas that changed without any waived break are also fuzzed with [`hypothesis-jsonschema`](https://github.com/python-jsonschema/hypothesis-jsonschema).
+* **Backward compatibility** (`tests/test_backward_compatability.py`): from v1.0.0, every schema is compared against the latest release in `reference/schemas/<version>/`, and any change that could reject previously valid data fails. Changed schemas are also fuzzed with [`hypothesis-jsonschema`](https://github.com/python-jsonschema/hypothesis-jsonschema). Until a v1.0.0 snapshot exists, these tests are skipped.
 
 ## How to Use These Schemas
 
