@@ -118,21 +118,16 @@ import json
 import jsonschema_rs
 
 # Load the schema
-with open('schemas/classification.json') as f:
+with open("schemas/classification.json") as f:
     schema = json.load(f)
 
 # Initialize validator (enforcing formats like 'date-time' and 'uri')
-validator = jsonschema_rs.Draft202012Validator(
-    schema, 
-    validate_formats=True
-)
+validator = jsonschema_rs.Draft202012Validator(schema, validate_formats=True)
 
 # Your data record
 record = {
     "vocabulary": ["cat", "dog", "bird"],
-    "labels": [
-        { "label": "cat", "score": 0.98 }
-    ]
+    "labels": [{"label": "cat", "score": 0.98}],
 }
 
 # This will raise a ValidationError if the record is invalid
