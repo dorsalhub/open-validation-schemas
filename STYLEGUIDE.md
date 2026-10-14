@@ -109,7 +109,7 @@ Example:
 
 #### Vocabularies
 
-Schemas with labels (`open/classification`, `open/entity-extraction`, `open/object-detection`) accept an inline `vocabulary` of up to 100 unique labels, or a `vocabulary_url` for anything larger. A vocabulary is repeated in every record, so a large inline one multiplies across a dataset. At 100 labels of up to 128 characters, it stays under 13 KB per record.
+Schemas with labels (`open/classification`, `open/entity-extraction`, `open/object-detection`) accept an inline `vocabulary` of up to 100 unique labels, or a `vocabulary_url` for anything larger. A vocabulary is repeated in every record, so a large inline one multiplies across a dataset. At 100 labels of up to 128 characters, it adds roughly 13 KB of ASCII text to each record.
 
 #### Geometry
 
@@ -157,6 +157,10 @@ While we support the 2020-12 spec, we specifically disallow specific features of
 * **Rule:** References must be internal (e.g., `#/$defs/name`). References to remote URLs (e.g., `https://example.com/schema.json`) are forbidden.
 * **Reason:** Schemas must be fully self-contained/standalone. Validation must not depend on network availability or external server state.
 * **Use sparingly:** Only move a subschema into `$defs` when it is reused within the same schema (as `open/geolocation` reuses `position`). Write single-use subschemas inline, where they are read.
+
+#### No `patternProperties`
+* **Rule:** The `patternProperties` keyword is forbidden.
+* **Reason:** Regular-expression keys make a schema's shape depend on regex semantics, which differ between validators and are hard to index or translate. To constrain the keys of an open object, use `propertyNames`.
 
 #### No Dynamic Scope
 * **Rule:** `$dynamicRef` and `$dynamicAnchor` are forbidden.

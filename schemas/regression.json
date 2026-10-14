@@ -19,7 +19,7 @@
         "unit": {
             "type": "string",
             "description": "The unit of measurement.",
-            "maxLength": 32
+            "maxLength": 128
         },
         "producer": {
             "type": "string",

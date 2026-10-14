@@ -33,7 +33,8 @@ Because of our commitment to **Backward Compatibility**, from v1.0.0 upgrading t
 * **Lockstep Releases:** The version applies to **all** schemas.
 * **Semantic Versioning:** We follow [SemVer 2.0.0](https://semver.org/).
     * **Beta Status (v0.x):** While in **v0.x**, we may make breaking changes to refine the standard. We aim to stabilize quickly, but we prioritize correctness over backward compatibility until v1.0.0.
-    * **Major (v1.x -> v2.x):** In the future, we plan to upgrade once to 1.0.0. This will not indicate a breaking change, but our confidence in the suite's maturity and stability.
+    * **Stable (v1.0.0):** Marks our confidence in the suite's maturity and stability. From this release on, every change is backward-compatible.
+    * **Major (v1.x -> v2.x):** Reserved for breaking changes. None are planned.
     * **Minor (v1.1 -> v1.2):** Non-breaking additions (e.g., adding an optional field or a new schema). This bumps the version for the entire package.
     * **Patch (v1.1.0 -> v1.1.1):** Bug fixes, description updates, or non-functional changes.
 * **Schema Metadata:** Every schema file contains a top-level `"version"` field matching the release it belongs to.
@@ -56,7 +57,7 @@ Represent the layout and content of a document, including text blocks, geometric
 * [**View Example Record**](./reference/examples/positive/document-extraction-1.json)
 
 ### `open/embedding`
-Store a vector embedding, including the high-dimensional feature vector and metadata about the algorithm used to generate it.
+Store a vector embedding, including the high-dimensional feature vector and metadata about the model used to generate it.
 * [**View Schema**](./schemas/embedding.json)
 * [**View Example Record**](./reference/examples/positive/embedding-dense.json)
 
@@ -92,7 +93,7 @@ Represent continuous numerical predictions. Supports point estimates, confidence
 
 ## Development & Testing
 
-We use [`pytest`](https://docs.pytest.org/en/stable/) and [`jsonschema`](https://python-jsonschema.readthedocs.io/en/stable/) for validation.
+We use [`pytest`](https://docs.pytest.org/en/stable/) and [`jsonschema-rs`](https://github.com/Stranger6667/jsonschema/tree/master/crates/jsonschema-py) for validation.
 
 ### Running Tests Locally
 We recommend [`uv`](https://docs.astral.sh/uv/) for dependency management.
