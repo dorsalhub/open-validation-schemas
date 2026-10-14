@@ -1,0 +1,174 @@
+{
+  "audio-transcription-bad-language-code.json": {
+    "path": "/language",
+    "message": "is longer than"
+  },
+  "audio-transcription-empty-segments.json": {
+    "path": "/segments",
+    "message": "has less than"
+  },
+  "audio-transcription-invalid-segment.json": {
+    "path": "/segments/0/speaker",
+    "message": "\"id\" is a required property"
+  },
+  "audio-transcription-missing-content.json": {
+    "path": "",
+    "message": "is not valid under any of the schemas"
+  },
+  "audio-transcription-negative-duration.json": {
+    "path": "/duration",
+    "message": "is less than the minimum"
+  },
+  "classification-bad-attributes.json": {
+    "path": "/labels/0/attributes/illegal_nested_data",
+    "message": "is not valid under any of the schemas"
+  },
+  "classification-bad-timestamp-length.json": {
+    "path": "/labels/0/timestamp",
+    "message": "is longer than"
+  },
+  "classification-duplicate-vocabulary.json": {
+    "path": "/vocabulary",
+    "message": "has non-unique elements"
+  },
+  "classification-invalid-structure.json": {
+    "path": "/vocabulary",
+    "message": "is not of type"
+  },
+  "document-extraction-bad-missing-text.json": {
+    "path": "/blocks/0",
+    "message": "\"text\" is a required property"
+  },
+  "document-extraction-bad-multipolygon-norm.json": {
+    "path": "/blocks/0/multi_polygon/0/1/x",
+    "message": "is greater than the maximum"
+  },
+  "document-extraction-bad-normalization.json": {
+    "path": "/blocks/0/box/width",
+    "message": "is greater than the maximum"
+  },
+  "document-extraction-bad-page-width.json": {
+    "path": "/page_width",
+    "message": "is not valid under any of the schemas"
+  },
+  "document-extraction-missing-unit.json": {
+    "path": "",
+    "message": "\"unit\" is a required property"
+  },
+  "document-extraction-unknown-block.json": {
+    "path": "/blocks/0/block_type",
+    "message": "is not one of"
+  },
+  "embedding-bad-vector-type.json": {
+    "path": "/vector",
+    "message": "is not valid under any of the schemas"
+  },
+  "embedding-nested-attributes.json": {
+    "path": "/attributes/source_model",
+    "message": "is not valid under any of the schemas"
+  },
+  "embedding-sparse-bad-types.json": {
+    "path": "/vector",
+    "message": "is not valid under any of the schemas"
+  },
+  "embedding-sparse-missing-dimensions.json": {
+    "path": "/vector",
+    "message": "is not valid under any of the schemas"
+  },
+  "entity-extraction-bad-geometry.json": {
+    "path": "",
+    "message": "\"unit\" is a required property"
+  },
+  "entity-extraction-missing-label.json": {
+    "path": "/entities/0",
+    "message": "\"label\" is a required property"
+  },
+  "entity-extraction-negative-coordinates.json": {
+    "path": "/entities/0/location/0",
+    "message": "is not valid under any of the schemas"
+  },
+  "entity-extraction-score-out-of-range.json": {
+    "path": "/entities/0/score",
+    "message": "is greater than the maximum"
+  },
+  "entity-extraction-span-missing-end.json": {
+    "path": "/entities/0/location/0",
+    "message": "is not valid under any of the schemas"
+  },
+  "generic-array-in-data.json": {
+    "path": "/data/tags_list",
+    "message": "is not valid under any of the schemas"
+  },
+  "generic-long-key.json": {
+    "path": "/data",
+    "message": "is longer than"
+  },
+  "generic-nested-data.json": {
+    "path": "/data/notifications",
+    "message": "is not valid under any of the schemas"
+  },
+  "geolocation-bad-bbox-length.json": {
+    "path": "/bbox",
+    "message": "is not valid under any of the schemas"
+  },
+  "geolocation-bad-coordinates.json": {
+    "path": "/geometry",
+    "message": "is not valid under any of the schemas"
+  },
+  "geolocation-latitude-out-of-range.json": {
+    "path": "/geometry",
+    "message": "is not valid under any of the schemas"
+  },
+  "geolocation-unbounded-foreign-member.json": {
+    "path": "/custom_data",
+    "message": "is not valid under any of the schemas"
+  },
+  "llm-output-extra-fields.json": {
+    "path": "/generation_params",
+    "message": "Additional properties are not allowed"
+  },
+  "llm-output-invalid-response-type.json": {
+    "path": "/response_data",
+    "message": "is not of type"
+  },
+  "llm-output-missing-required.json": {
+    "path": "",
+    "message": "\"model\" is a required property"
+  },
+  "object-detection-empty-without-context.json": {
+    "path": "",
+    "message": "is not valid under any of the schemas"
+  },
+  "object-detection-invalid-polygon.json": {
+    "path": "/objects/0/polygon",
+    "message": "has less than"
+  },
+  "object-detection-missing-geometry.json": {
+    "path": "/objects/0",
+    "message": "is not valid under any of the schemas"
+  },
+  "object-detection-nested-attributes.json": {
+    "path": "/objects/0/attributes/metadata",
+    "message": "is not valid under any of the schemas"
+  },
+  "regression-bad-statistic.json": {
+    "path": "/points/0/statistic",
+    "message": "is not one of"
+  },
+  "regression-invalid-quantile.json": {
+    "path": "/points/0/quantile_level",
+    "message": "is greater than the maximum"
+  },
+  "regression-missing-value.json": {
+    "path": "/points/0",
+    "message": "\"value\" is a required property"
+  },
+  "regression-nested-attributes.json": {
+    "path": "/attributes/metadata",
+    "message": "is not valid under any of the schemas"
+  },
+  "regression-quantile-missing-level.json": {
+    "path": "/points/0",
+    "message": "\"quantile_level\" is a required property"
+  }
+}

@@ -1,85 +1,92 @@
 import json
-import pytest
-import jsonschema_rs
 from pathlib import Path
 
-# --- Configuration ---
+import jsonschema_rs
+import pytest
+
 REPO_ROOT = Path(__file__).parent.parent
-REFERENCE_ROOT = REPO_ROOT / "reference"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
-EXAMPLES_DIR = REFERENCE_ROOT / "examples"
+EXAMPLES_DIR = REPO_ROOT / "reference" / "examples"
 POSITIVE_DIR = EXAMPLES_DIR / "positive"
 NEGATIVE_DIR = EXAMPLES_DIR / "negative"
+NEGATIVE_EXPECTATIONS = EXAMPLES_DIR / "negative-expectations.json"
 
-def get_known_schemas():
-    """
-    Returns a dict mapping schema names (without extension) to their full paths.
-    Example: {'audio-transcription': Path(.../audio-transcription.json)}
-    """
-    return {p.stem: p for p in SCHEMAS_DIR.glob("*.json")}
+KNOWN_SCHEMAS = {p.stem: p for p in SCHEMAS_DIR.glob("*.json")}
 
-KNOWN_SCHEMAS = get_known_schemas()
 
-def resolve_schema(example_path):
-    """
-    Finds the matching schema for a given example file by checking prefixes.
-    Example: 'audio-transcription-bad-1.json' -> matches 'audio-transcription'
-    """
-    filename = example_path.name
+def resolve_schema(example_path: Path) -> Path:
+    """Return the schema whose name is the longest prefix of the example's filename."""
+    matches = [name for name in KNOWN_SCHEMAS if example_path.name.startswith(name)]
+    if not matches:
+        raise ValueError(
+            f"Could not find a matching schema for example: {example_path.name}"
+        )
+    return KNOWN_SCHEMAS[max(matches, key=len)]
 
-    for schema_name, schema_path in sorted(KNOWN_SCHEMAS.items(), key=lambda x: len(x[0]), reverse=True):
-        if filename.startswith(schema_name):
-            return schema_path
-            
-    raise ValueError(f"Could not find a matching schema for example: {filename}")
 
-def load_json(path):
-    with open(path, 'r') as f:
+def load_json(path: Path):
+    with open(path) as f:
         return json.load(f)
 
-# --- Tests ---
 
-def get_positive_examples():
-    if not POSITIVE_DIR.exists():
-        return []
-    return sorted(list(POSITIVE_DIR.glob("*.json")))
+def validator_for(example_path: Path) -> jsonschema_rs.Draft202012Validator:
+    return jsonschema_rs.Draft202012Validator(
+        load_json(resolve_schema(example_path)), validate_formats=True
+    )
 
-def get_negative_examples():
-    if not NEGATIVE_DIR.exists():
-        return []
-    return sorted(list(NEGATIVE_DIR.glob("*.json")))
 
-@pytest.mark.parametrize("example_path", get_positive_examples())
+def pointer(error: jsonschema_rs.ValidationError) -> str:
+    return "".join(f"/{part}" for part in error.instance_path)
+
+
+def covered_schemas(directory: Path) -> set[str]:
+    return {resolve_schema(p).stem for p in directory.glob("*.json")}
+
+
+POSITIVE_EXAMPLES = sorted(POSITIVE_DIR.glob("*.json"))
+NEGATIVE_EXAMPLES = sorted(NEGATIVE_DIR.glob("*.json"))
+EXPECTATIONS = load_json(NEGATIVE_EXPECTATIONS)
+
+
+@pytest.mark.parametrize("example_path", POSITIVE_EXAMPLES, ids=lambda p: p.name)
 def test_positive_examples_are_valid(example_path):
-    """
-    Ensures that every file in examples/positive validates successfully.
-    """
-    instance = load_json(example_path)
-    schema_path = resolve_schema(example_path)
-    schema = load_json(schema_path)
+    """Every file in examples/positive validates successfully."""
+    validator_for(example_path).validate(load_json(example_path))
 
-    validator = jsonschema_rs.Draft202012Validator(
-        schema, 
-        validate_formats=True
+
+@pytest.mark.parametrize("example_path", NEGATIVE_EXAMPLES, ids=lambda p: p.name)
+def test_negative_examples_fail_for_the_expected_reason(example_path):
+    """Every file in examples/negative fails, only at its expected location, with its expected message."""
+    expected = EXPECTATIONS.get(example_path.name)
+    assert expected, f"{example_path.name} has no entry in {NEGATIVE_EXPECTATIONS.name}"
+
+    errors = list(validator_for(example_path).iter_errors(load_json(example_path)))
+    assert errors, f"{example_path.name} unexpectedly passed validation"
+
+    unrelated = [
+        e for e in errors if not (pointer(e) + "/").startswith(expected["path"] + "/")
+    ]
+    assert not unrelated, (
+        f"{example_path.name} also fails outside {expected['path'] or '/'}: "
+        + "; ".join(f"{pointer(e)}: {e.message}" for e in unrelated)
+    )
+    assert any(expected["message"] in e.message for e in errors), (
+        f"{example_path.name} did not fail with {expected['message']!r}: "
+        + "; ".join(e.message for e in errors)
     )
 
-    validator.validate(instance)
 
-@pytest.mark.parametrize("example_path", get_negative_examples())
-def test_negative_examples_are_invalid(example_path):
-    """
-    Ensures that every file in examples/negative FAILS validation.
-    If a negative example passes validation, this test fails.
-    """
-    instance = load_json(example_path)
-    schema_path = resolve_schema(example_path)
-    schema = load_json(schema_path)
-
-    validator = jsonschema_rs.Draft202012Validator(
-        schema, 
-        validate_formats=True
+def test_negative_expectations_have_no_stale_entries():
+    names = {p.name for p in NEGATIVE_EXAMPLES}
+    stale = set(EXPECTATIONS) - names
+    assert not stale, (
+        f"{NEGATIVE_EXPECTATIONS.name} lists missing examples: {sorted(stale)}"
     )
 
-    # Expect a validation error
-    with pytest.raises(jsonschema_rs.ValidationError):
-        validator.validate(instance)
+
+@pytest.mark.parametrize(
+    "kind, directory", [("positive", POSITIVE_DIR), ("negative", NEGATIVE_DIR)]
+)
+def test_every_schema_has_examples(kind, directory):
+    missing = set(KNOWN_SCHEMAS) - covered_schemas(directory)
+    assert not missing, f"Schemas with no {kind} examples: {sorted(missing)}"

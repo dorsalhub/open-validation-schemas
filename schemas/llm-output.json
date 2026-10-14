@@ -7,7 +7,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://dorsalhub.com/schemas/open/llm-output",
     "title": "LLM Output",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "Store a single interaction with an LLM (a Prompt/Response pair). Captures the input prompt, the resulting output, and the configuration parameters used at that moment.",
     "type": "object",
     "properties": {
@@ -49,8 +49,8 @@
             "properties": {
                 "system_prompt": {
                     "type": "string",
-                    "description": "An optional system-level instruction that defines the model's persona, style, or constraints.",
-                    "maxLength": 4096
+                    "description": "An optional system-level instruction that defines the model's persona, style, or constraints. For contexts exceeding the character limit, this field should be truncated or a reference to the full storage location.",
+                    "maxLength": 262144
                 },
                 "temperature": {
                     "type": "number",
@@ -64,6 +64,11 @@
                     "minimum": 0,
                     "maximum": 1
                 },
+                "top_k": {
+                    "type": "integer",
+                    "description": "Limits sampling to the k most likely tokens.",
+                    "minimum": 1
+                },
                 "max_tokens": {
                     "type": "integer",
                     "description": "The maximum number of tokens that were allowed to be generated.",
@@ -74,17 +79,21 @@
                     "description": "The seed used for sampling for reproducible outputs."
                 },
                 "stop": {
-                    "type": [
-                        "string",
-                        "array"
-                    ],
                     "description": "One or more sequences where the API will stop generating further tokens.",
-                    "maxLength": 128,
-                    "items": {
-                        "type": "string",
-                        "maxLength": 128
-                    },
-                    "maxItems": 16
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "maxLength": 128
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "maxLength": 128
+                            },
+                            "maxItems": 16
+                        }
+                    ]
                 },
                 "presence_penalty": {
                     "type": "number",
@@ -100,14 +109,15 @@
                 },
                 "response_format": {
                     "type": "object",
-                    "description": "Specifies the output format (e.g., 'text' or 'json_object').",
+                    "description": "Specifies the output format (e.g., 'text', 'json_object' or 'json_schema').",
                     "properties": {
                         "type": {
                             "type": "string",
                             "description": "The type of output format.",
                             "enum": [
                                 "text",
-                                "json_object"
+                                "json_object",
+                                "json_schema"
                             ]
                         }
                     },
@@ -150,14 +160,22 @@
                     "properties": {
                         "prompt_tokens": {
                             "type": "integer",
+                            "description": "The number of tokens in the input.",
                             "minimum": 0
                         },
                         "completion_tokens": {
                             "type": "integer",
+                            "description": "The number of tokens generated.",
                             "minimum": 0
                         },
                         "total_tokens": {
                             "type": "integer",
+                            "description": "The total number of tokens used.",
+                            "minimum": 0
+                        },
+                        "cached_prompt_tokens": {
+                            "type": "integer",
+                            "description": "The number of input tokens served from a prompt cache.",
                             "minimum": 0
                         }
                     },
@@ -175,6 +193,9 @@
             "type": "object",
             "description": "Arbitrary metadata relevant to this item.",
             "maxProperties": 16,
+            "propertyNames": {
+                "maxLength": 128
+            },
             "additionalProperties": {
                 "anyOf": [
                     {

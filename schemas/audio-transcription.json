@@ -7,17 +7,21 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://dorsalhub.com/schemas/open/audio-transcription",
     "title": "Audio Transcription",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "Store text transcribed from an audio source. Supports timed segments, speaker identification, and non-verbal events.",
     "type": "object",
     "properties": {
         "track_id": {
-            "type": [
-                "string",
-                "integer"
-            ],
-            "maxLength": 128,
-            "description": "(Optional) Identifier for the specific audio track or channel in the source file."
+            "description": "(Optional) Identifier for the specific audio track or channel in the source file.",
+            "anyOf": [
+                {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                {
+                    "type": "integer"
+                }
+            ]
         },
         "producer": {
             "type": "string",
@@ -49,6 +53,7 @@
             "type": "array",
             "description": "An array of timed text segments. Can be used for phrases, sentences, or individual words.",
             "maxItems": 100000,
+            "minItems": 1,
             "items": {
                 "type": "object",
                 "properties": {
@@ -64,7 +69,7 @@
                     },
                     "end_time": {
                         "type": "number",
-                        "description": "Segment end time in seconds.",
+                        "description": "Segment end time in seconds. Must not be earlier than start_time.",
                         "minimum": 0
                     },
                     "language": {
@@ -75,14 +80,19 @@
                     },
                     "speaker": {
                         "type": "object",
+                        "description": "The speaker of this segment.",
                         "properties": {
                             "id": {
-                                "type": [
-                                    "string",
-                                    "integer"
-                                ],
-                                "maxLength": 128,
-                                "description": "Identifier for the speaker."
+                                "description": "Identifier for the speaker.",
+                                "anyOf": [
+                                    {
+                                        "type": "string",
+                                        "maxLength": 128
+                                    },
+                                    {
+                                        "type": "integer"
+                                    }
+                                ]
                             },
                             "name": {
                                 "type": "string",
@@ -120,6 +130,9 @@
                         "type": "object",
                         "description": "Arbitrary metadata relevant to this segment.",
                         "maxProperties": 16,
+                        "propertyNames": {
+                            "maxLength": 128
+                        },
                         "additionalProperties": {
                             "anyOf": [
                                 {
@@ -151,6 +164,9 @@
             "type": "object",
             "description": "Arbitrary metadata relevant to this transcription.",
             "maxProperties": 16,
+            "propertyNames": {
+                "maxLength": 128
+            },
             "additionalProperties": {
                 "anyOf": [
                     {

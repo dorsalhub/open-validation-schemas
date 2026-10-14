@@ -6,8 +6,8 @@
     },
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://dorsalhub.com/schemas/open/classification",
-    "title": "File Classification",
-    "version": "0.5.0",
+    "title": "Classification",
+    "version": "0.6.0",
     "description": "Represent the result of a classification. Supports predicted labels, confidence scores, and vocabulary.",
     "type": "object",
     "properties": {
@@ -28,8 +28,9 @@
         },
         "vocabulary": {
             "type": "array",
-            "description": "A list of the possible labels in this classification scheme.",
+            "description": "A list of the possible labels in this classification scheme. For more than 100 labels, use 'vocabulary_url'.",
             "maxItems": 100,
+            "uniqueItems": true,
             "items": {
                 "type": "string",
                 "description": "A single valid label from the vocabulary.",
@@ -52,7 +53,7 @@
                 "properties": {
                     "label": {
                         "type": "string",
-                        "description": "The predicted label.",
+                        "description": "The predicted label. Must be a member of 'vocabulary' when it is present.",
                         "maxLength": 128
                     },
                     "score": {
@@ -71,6 +72,9 @@
                         "type": "object",
                         "description": "Additional metadata about this specific label.",
                         "maxProperties": 16,
+                        "propertyNames": {
+                            "maxLength": 128
+                        },
                         "additionalProperties": {
                             "anyOf": [
                                 {
@@ -100,6 +104,9 @@
             "type": "object",
             "description": "Arbitrary metadata relevant to this classification.",
             "maxProperties": 16,
+            "propertyNames": {
+                "maxLength": 128
+            },
             "additionalProperties": {
                 "anyOf": [
                     {
@@ -129,7 +136,10 @@
                     "labels": {
                         "maxItems": 0
                     }
-                }
+                },
+                "required": [
+                    "labels"
+                ]
             },
             "then": {
                 "anyOf": [

@@ -4,9 +4,25 @@ Where possible, the Open Validation Schemas adhere to these design patterns.
 
 ### 1. Consistent Constraints
 
-  * **No Unbounded Structures:** Every `string` must have a `maxLength`. Every `array` must have a `maxItems`.
-  * **No Additional Properties:** `additionalProperties` must always be `false`. Use the standard `attributes` pattern for extensibility.
-  * **No Unbounded Nesting:** Schemas should have a fixed-depth.
+  * **No Unbounded Structures:** Every `string` must have a `maxLength`. Every `array` must have a `maxItems`. Every open object (one that does not set `additionalProperties: false`) must have a `maxProperties` and must limit its key length with `"propertyNames": { "maxLength": 128 }`.
+  * **No Additional Properties:** Objects with `properties` must set `additionalProperties` to `false`. Use the standard `attributes` pattern for extensibility.
+  * **No Unbounded Nesting:** Schemas must have a fixed depth. Self-references (`"$ref": "#"`) and recursive `$defs` are forbidden.
+  * **No Type Lists:** Write `"anyOf": [{ "type": "string", "maxLength": 128 }, { "type": "integer" }]` rather than `"type": ["string", "integer"]`, so that each type carries its own constraints.
+
+#### String Length Tiers
+
+Choose a string's `maxLength` from this table rather than inventing a new limit. When a field outgrows its limit, move it to the next tier.
+
+| `maxLength` | Use for | Examples |
+| :--- | :--- | :--- |
+| `3` | ISO codes | `language` |
+| `128` | Identifiers, labels, names and keys | `label`, `id`, `speaker.name`, `propertyNames` |
+| `256` | Short explanations | `score_explanation`, `target` |
+| `1024` | Free-text names and short values | `producer`, `model`, `attributes` values |
+| `2048` | URLs | `vocabulary_url` |
+| `4096` | A single unit of extracted text | a block, segment or entity `text` |
+| `262144` | Long input text | `prompt`, `system_prompt` |
+| `524288` | Long output text | `response_data`, a full transcription `text` |
 
 ### 2. Common Patterns
 
@@ -55,6 +71,9 @@ Depending on the schema, it may also make sense to add attributes to individual 
     "type": "object",
     "description": "Arbitrary metadata relevant to this item.",
     "maxProperties": 16,
+    "propertyNames": {
+        "maxLength": 128
+    },
     "additionalProperties": {
         "anyOf": [
             { "type": "string", "maxLength": 1024 },
@@ -88,9 +107,41 @@ Example:
 }
 ```
 
+#### Vocabularies
+
+Schemas with labels (`open/classification`, `open/entity-extraction`, `open/object-detection`) accept an inline `vocabulary` of up to 100 unique labels, or a `vocabulary_url` for anything larger. A vocabulary is repeated in every record, so a large inline one multiplies across a dataset. At 100 labels of up to 128 characters, it adds roughly 13 KB of ASCII text to each record.
+
+#### Geometry
+
+Schemas that carry 2D geometry (`open/document-extraction`, `open/entity-extraction`, `open/object-detection`) share identical inline `box`, `polygon` and `multi_polygon` definitions. Because remote references are forbidden, each schema holds its own copy; change all copies together (the tests check they are identical).
+
+Coordinates are measured from the top-left corner and are never negative. Every coordinate is expressed in the record's `unit` (`px`, `pt`, `normalized` or `per_mille`), and `unit` is required whenever geometry is present.
+
+#### Conditionals
+
+An `if` that tests a property must also list that property in `required`. Otherwise the condition is true whenever the property is absent, and its `then` applies unexpectedly:
+
+```json
+"if": {
+    "properties": { "unit": { "const": "normalized" } },
+    "required": ["unit"]
+}
+```
+
+#### Constraints JSON Schema Cannot Express
+
+Some rules relate two values, such as an end time that must not be earlier than its start time, or a label that must belong to the record's `vocabulary`. JSON Schema cannot check these, so state them in the field's `description` with "must", and leave consumers to enforce them:
+
+```json
+"end_time": {
+    "type": "number",
+    "description": "Segment end time in seconds. Must not be earlier than start_time."
+}
+```
+
 #### Common Field Locations
 
-For readability and debugging purposes, common fields are in similar locations in each schema; for example `"x-license"` is always at the very top; standard fields like as `"$schema"`, `"$id"` and `"title"` sit above `"properties"`; and `"additionalproperties"` is always placed at the bottom of any object it constrains.
+For readability and debugging purposes, common fields are in similar locations in each schema: `"x-license"` is always at the very top; it is followed by `"$schema"`, `"$id"`, `"title"`, `"version"` and `"description"`, all above `"properties"`; `"$defs"` comes after the validation keywords; and `"additionalProperties"` is always the last key of any object it constrains.
 
 ### 3. Language Constraints
 
@@ -105,6 +156,11 @@ While we support the 2020-12 spec, we specifically disallow specific features of
 #### No External Dependencies (`$ref`)
 * **Rule:** References must be internal (e.g., `#/$defs/name`). References to remote URLs (e.g., `https://example.com/schema.json`) are forbidden.
 * **Reason:** Schemas must be fully self-contained/standalone. Validation must not depend on network availability or external server state.
+* **Use sparingly:** Only move a subschema into `$defs` when it is reused within the same schema (as `open/geolocation` reuses `position`). Write single-use subschemas inline, where they are read.
+
+#### No `patternProperties`
+* **Rule:** The `patternProperties` keyword is forbidden.
+* **Reason:** Regular-expression keys make a schema's shape depend on regex semantics, which differ between validators and are hard to index or translate. To constrain the keys of an open object, use `propertyNames`.
 
 #### No Dynamic Scope
 * **Rule:** `$dynamicRef` and `$dynamicAnchor` are forbidden.
@@ -112,4 +168,4 @@ While we support the 2020-12 spec, we specifically disallow specific features of
 
 ### 4. Exceptions
 
-- :`open/geolocation`**: This schema implements a subset of GeoJSON ([RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946){:target="_blank"}). For this reason it does not include the `attributes` field, as GeoJSON already defines `properties` with a similar function.
+- **`open/geolocation`**: This schema implements a subset of GeoJSON ([RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946)). For this reason it does not include the `attributes` field, as GeoJSON already defines `properties` with a similar function. Its objects also accept RFC 7946 foreign members, so they are open objects (bounded by `maxProperties` and `propertyNames`) rather than setting `additionalProperties: false`.
