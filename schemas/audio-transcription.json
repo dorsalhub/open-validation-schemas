@@ -2,26 +2,19 @@
     "x-license": {
         "id": "Apache-2.0",
         "notice": "Copyright 2025-2026 Dorsal Hub LTD",
-        "url": "https://github.com/dorsalhub/open-validation-schemas/blob/main/LICENSE"
+        "url": "https://github.com/oatschema/oats/blob/main/LICENSE"
     },
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://dorsalhub.com/schemas/open/audio-transcription",
+    "$id": "https://oatschema.org/0.7.0/audio-transcription",
     "title": "Audio Transcription",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "description": "Store text transcribed from an audio source. Supports timed segments, speaker identification, and non-verbal events.",
     "type": "object",
     "properties": {
         "track_id": {
-            "description": "(Optional) Identifier for the specific audio track or channel in the source file.",
-            "anyOf": [
-                {
-                    "type": "string",
-                    "maxLength": 128
-                },
-                {
-                    "type": "integer"
-                }
-            ]
+            "type": "string",
+            "description": "(Optional) Identifier for the specific audio track or channel in the source file. Numeric identifiers are written as strings (e.g., '0').",
+            "maxLength": 128
         },
         "producer": {
             "type": "string",
@@ -83,16 +76,9 @@
                         "description": "The speaker of this segment.",
                         "properties": {
                             "id": {
-                                "description": "Identifier for the speaker.",
-                                "anyOf": [
-                                    {
-                                        "type": "string",
-                                        "maxLength": 128
-                                    },
-                                    {
-                                        "type": "integer"
-                                    }
-                                ]
+                                "type": "string",
+                                "description": "Identifier for the speaker. Numeric identifiers, such as diarization cluster numbers, are written as strings (e.g., '0').",
+                                "maxLength": 128
                             },
                             "name": {
                                 "type": "string",

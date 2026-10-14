@@ -1,6 +1,6 @@
 # Schema Style Guide
 
-Where possible, the Open Validation Schemas adhere to these design patterns.
+Where possible, OATS schemas adhere to these design patterns.
 
 ### 1. Consistent Constraints
 
@@ -30,8 +30,8 @@ Choose a string's `maxLength` from this table rather than inventing a new limit.
 
 All schemas support a top-level identifier `producer` or `model` which indicates the **creator** (model, tool or author) of the record.
 
-- If the record *could* be created manually or have a human author (e.g. `open/audio-transcription`) prefer `producer`. 
-- If the schema describes a model's output (e.g. `open/llm-output`, `open/embedding`), prefer `model`. 
+- If the record *could* be created manually or have a human author (e.g. `audio-transcription`) prefer `producer`. 
+- If the schema describes a model's output (e.g. `llm-output`, `embedding`), prefer `model`. 
 
 Example:
 
@@ -85,6 +85,20 @@ Depending on the schema, it may also make sense to add attributes to individual 
 }
 ```
 
+#### Identifiers
+
+Identifier fields (`id`, and any field ending in `_id` such as `parent_id` or `track_id`) are strings with a `maxLength` of 128. Write numeric identifiers as strings (`"0"`, not `0`).
+
+**Rationale**: Identifiers are compared for equality, often across fields (`parent_id` must match some `id`). Mixing types would leave it unclear whether `0` matches `"0"`, and would stop a field from being stored in a single typed column. The one exception is `geolocation`'s feature `id`, which follows RFC 7946.
+
+```json
+"group_id": {
+    "type": "string",
+    "description": "An identifier for the entity this segment belongs to.",
+    "maxLength": 128
+}
+```
+
 #### Scores & Confidence
 
 Unless the schema is for a domain with its own established constraints for model scoring, prefer a field named `score` whose value is a normalized float:
@@ -109,17 +123,17 @@ Example:
 
 #### Vocabularies
 
-Schemas with labels (`open/classification`, `open/entity-extraction`, `open/object-detection`) accept an inline `vocabulary` of up to 100 unique labels, or a `vocabulary_url` for anything larger. A vocabulary is repeated in every record, so a large inline one multiplies across a dataset. At 100 labels of up to 128 characters, it adds roughly 13 KB of ASCII text to each record.
+Schemas with labels (`classification`, `entity-extraction`, `object-detection`, `temporal-segmentation`) accept an inline `vocabulary` of up to 100 unique labels, or a `vocabulary_url` for anything larger. A vocabulary is repeated in every record, so a large inline one multiplies across a dataset. At 100 labels of up to 128 characters, it adds roughly 13 KB of ASCII text to each record.
 
 #### Geometry
 
-Schemas that carry 2D geometry (`open/document-extraction`, `open/entity-extraction`, `open/object-detection`) share identical inline `box`, `polygon` and `multi_polygon` definitions. Because remote references are forbidden, each schema holds its own copy; change all copies together (the tests check they are identical).
+Schemas that carry 2D geometry (`document-extraction`, `entity-extraction`, `object-detection`) share identical inline `box`, `polygon` and `multi_polygon` definitions. Because remote references are forbidden, each schema holds its own copy; change all copies together (the tests check they are identical).
 
 Coordinates are measured from the top-left corner and are never negative. Every coordinate is expressed in the record's `unit` (`px`, `pt`, `normalized` or `per_mille`), and `unit` is required whenever geometry is present.
 
 #### Conditionals
 
-An `if` that tests a property must also list that property in `required`. Otherwise the condition is true whenever the property is absent, and its `then` applies unexpectedly:
+An `if` that tests a property must also list that property in `required`, unless the object that holds the conditional already requires it. Otherwise the condition is true whenever the property is absent, and its `then` applies unexpectedly:
 
 ```json
 "if": {
@@ -156,7 +170,7 @@ While we support the 2020-12 spec, we specifically disallow specific features of
 #### No External Dependencies (`$ref`)
 * **Rule:** References must be internal (e.g., `#/$defs/name`). References to remote URLs (e.g., `https://example.com/schema.json`) are forbidden.
 * **Reason:** Schemas must be fully self-contained/standalone. Validation must not depend on network availability or external server state.
-* **Use sparingly:** Only move a subschema into `$defs` when it is reused within the same schema (as `open/geolocation` reuses `position`). Write single-use subschemas inline, where they are read.
+* **Use sparingly:** Only move a subschema into `$defs` when it is reused within the same schema (as `geolocation` reuses `position`). Write single-use subschemas inline, where they are read.
 
 #### No `patternProperties`
 * **Rule:** The `patternProperties` keyword is forbidden.
@@ -168,4 +182,4 @@ While we support the 2020-12 spec, we specifically disallow specific features of
 
 ### 4. Exceptions
 
-- **`open/geolocation`**: This schema implements a subset of GeoJSON ([RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946)). For this reason it does not include the `attributes` field, as GeoJSON already defines `properties` with a similar function. Its objects also accept RFC 7946 foreign members, so they are open objects (bounded by `maxProperties` and `propertyNames`) rather than setting `additionalProperties: false`.
+- **`geolocation`**: This schema implements a subset of GeoJSON ([RFC 7946](https://datatracker.ietf.org/doc/html/rfc7946)). For this reason it does not include the `attributes` field, as GeoJSON already defines `properties` with a similar function. Its objects also accept RFC 7946 foreign members, so they are open objects (bounded by `maxProperties` and `propertyNames`) rather than setting `additionalProperties: false`.
