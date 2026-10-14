@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing! This project thrives on community involvement, and we appreciate any contribution, from a small typo fix to a proposal for a brand-new schema.
 
-This document provides a set of guidelines for contributing to the `dorsal/open-validation-schemas` repository.
+This document provides a set of guidelines for contributing to the `dorsalhub/open-validation-schemas` repository.
 
 ## Code of Conduct
 
@@ -14,7 +14,7 @@ There are two main ways to contribute to this project:
 
 ### 1. Suggesting Improvements or Reporting Bugs
 
-If you find a problem with an existing schema, see a way to improve a description, or have a suggestion, please **[open an issue](https://github.com/dorsalhub/open-valkidation-schemas/issues)**.
+If you find a problem with an existing schema, see a way to improve a description, or have a suggestion, please **[open an issue](https://github.com/dorsalhub/open-validation-schemas/issues)**.
 - For bugs, please use the "Bug Report" template.
 - For improvements, feel free to use a blank issue and provide a clear description of your suggestion.
 
@@ -30,15 +30,22 @@ If you have an idea for a new, generic open validation schema that would be valu
 
 1.  **Fork the repository** and create your branch from `main`.
 2.  **Add your new schema file** to the `/schemas` directory, following the `schema-name.json` naming convention.
-3.  **Add Examples:**
-    * Add at least one valid example to `/examples/positive/schema-name-1.json`.
-    * Add at least one invalid example to `/examples/negative/schema-name-invalid.json` to demonstrate constraint enforcement.
-4.  **Run Tests Locally:**
+3.  **Add Examples:** Examples are matched to schemas by filename prefix, so start every example's filename with the schema name.
+    * Add at least one valid example to `reference/examples/positive/schema-name-1.json`.
+    * Add at least one invalid example to `reference/examples/negative/schema-name-<what-it-breaks>.json` to demonstrate constraint enforcement. Each negative example should break exactly one rule.
+    * Record why each negative example fails in `reference/examples/negative-expectations.json`: the JSON Pointer `path` of the failing value (`""` for the root) and a substring of the expected error `message`.
+4.  **Check Backward Compatibility:** Changes to existing schemas must not reject data that the latest release in `reference/schemas/` accepted. If a breaking change is intentional (only allowed while in v0.x), add an entry to `reference/breaking-changes.json` under the upcoming version, with the `schema`, the `path` (glob patterns allowed), the `rule` reported by the test, and a `reason`.
+5.  **Run Tests Locally:**
     * Install `uv` (if not installed): `curl -LsSf https://astral.sh/uv/install.sh | sh`
     * Run the test suite: `uv run pytest`
     * Ensure all tests pass before submitting.
-5.  **Update the main `README.md`** to include a section for your new schema in the "Available Schemas" list.
-6.  **Submit the Pull Request.**
+6.  **Update the main `README.md`** to include a section for your new schema in the "Available Schemas" list.
+7.  **Submit the Pull Request.**
+
+### Releasing (maintainers)
+
+1.  Bump `version` in `pyproject.toml` and the `"version"` field of every schema (the tests enforce that they match).
+2.  Once the release is published, copy every file in `schemas/` to `reference/schemas/<released-version>/`. That snapshot becomes the baseline for the next release's backward-compatibility tests.
 
 ### Style Guide for Schemas
 

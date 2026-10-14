@@ -7,7 +7,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://dorsalhub.com/schemas/open/regression",
     "title": "Regression",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "Represent continuous numerical predictions. Supports point estimates, confidence intervals, and time-series forecasting.",
     "type": "object",
     "properties": {
@@ -28,7 +28,7 @@
         },
         "score_explanation": {
             "type": "string",
-            "description": "Explanation of the quality score metric (e.g. 'R-squared' or 'Model Confidence').",
+            "description": "Explanation of the score metric and its semantics (e.g. 'R-squared' or 'Model Confidence').",
             "maxLength": 256
         },
         "points": {
@@ -37,13 +37,18 @@
             "maxItems": 10000,
             "items": {
                 "type": "object",
+                "description": "A single predicted value.",
                 "properties": {
                     "value": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
-                        "description": "The predicted or sampled value."
+                        "description": "The predicted or sampled value. Null represents a missing value, such as a gap in a time series.",
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "statistic": {
                         "type": "string",
@@ -60,7 +65,7 @@
                     },
                     "quantile_level": {
                         "type": "number",
-                        "description": "If statistic='quantile', this defines the level (e.g., 0.95).",
+                        "description": "The quantile level (e.g., 0.95). Required when statistic is 'quantile', and only allowed then.",
                         "minimum": 0,
                         "maximum": 1
                     },
@@ -76,18 +81,21 @@
                     },
                     "interval_upper": {
                         "type": "number",
-                        "description": "The upper bound of the confidence interval."
+                        "description": "The upper bound of the confidence interval. Must not be less than interval_lower."
                     },
                     "score": {
                         "type": "number",
-                        "description": "A quality score for this specific point.",
-                        "minimum": 0,
+                        "description": "A normalized score for this point (-1.0 to 1.0). Depending on the metric, this may be a probability (0 to 1) or a bipolar metric such as R-squared clipped to [-1, 1]. Use score_explanation to clarify.",
+                        "minimum": -1,
                         "maximum": 1
                     },
                     "attributes": {
                         "type": "object",
                         "description": "Arbitrary metadata relevant to this point.",
                         "maxProperties": 16,
+                        "propertyNames": {
+                            "maxLength": 128
+                        },
                         "additionalProperties": {
                             "anyOf": [
                                 {
@@ -110,6 +118,42 @@
                 "required": [
                     "value"
                 ],
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "statistic": {
+                                    "const": "quantile"
+                                }
+                            },
+                            "required": [
+                                "statistic"
+                            ]
+                        },
+                        "then": {
+                            "required": [
+                                "quantile_level"
+                            ]
+                        }
+                    },
+                    {
+                        "if": {
+                            "required": [
+                                "quantile_level"
+                            ]
+                        },
+                        "then": {
+                            "properties": {
+                                "statistic": {
+                                    "const": "quantile"
+                                }
+                            },
+                            "required": [
+                                "statistic"
+                            ]
+                        }
+                    }
+                ],
                 "additionalProperties": false
             }
         },
@@ -117,6 +161,9 @@
             "type": "object",
             "description": "Arbitrary metadata relevant to this regression.",
             "maxProperties": 16,
+            "propertyNames": {
+                "maxLength": 128
+            },
             "additionalProperties": {
                 "anyOf": [
                     {
@@ -146,7 +193,10 @@
                     "points": {
                         "maxItems": 0
                     }
-                }
+                },
+                "required": [
+                    "points"
+                ]
             },
             "then": {
                 "required": [

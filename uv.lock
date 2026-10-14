@@ -117,13 +117,15 @@ wheels = [
 
 [[package]]
 name = "open-validation-schemas"
-version = "0.5.0"
+version = "0.6.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "hypothesis" },
     { name = "hypothesis-jsonschema" },
     { name = "jsonschema-rs" },
+    { name = "packaging" },
     { name = "pytest" },
 ]
 
@@ -131,8 +133,10 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "hypothesis", specifier = ">=6.0" },
     { name = "hypothesis-jsonschema", specifier = ">=0.23.1" },
     { name = "jsonschema-rs", specifier = ">=0.38" },
+    { name = "packaging", specifier = ">=24.0" },
     { name = "pytest", specifier = ">=8.0" },
 ]
 
